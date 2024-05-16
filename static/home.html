@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Token Management</title>
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h3 class="card-title">Token Management</h3>
+              <div id="status-message" class="mb-3"></div>
+              <button id="refresh-button" class="btn btn-primary">
+                Refresh Token
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function redirectToLogin() {
+        window.location.href = "/login";
+      }
+
+      function callApiWithToken(endpoint, token) {
+        fetch(endpoint, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+          .then((response) => {
+            if (response.ok) {
+              return response.json();
+            } else {
+              throw new Error("Not logged in.");
+            }
+          })
+          .then((data) => {
+            displayStatusMessage("User is logged in.", "success");
+          })
+          .catch((error) => {
+            if (error.message === "Not logged in.") {
+              redirectToLogin();
+            } else {
+              console.log(error);
+              displayStatusMessage("API Error.", "danger");
+            }
+          });
+      }
+
+      function displayStatusMessage(message, type) {
+        const statusMessageDiv = document.getElementById("status-message");
+        statusMessageDiv.innerHTML = `
+        <div class="alert alert-${type}" role="alert">
+          ${message}
+        </div>
+      `;
+      }
+
+      function checkAndRefreshToken() {
+        const accessToken = localStorage.getItem("accessToken");
+        const refreshToken = localStorage.getItem("refreshToken");
+
+        if (accessToken) {
+          callApiWithToken(
+            "http://localhost:4000/api/v1/auth/info",
+            accessToken
+          );
+        }
+
+        if (!accessToken && refreshToken) {
+          fetch("http://localhost:4000/api/v1/auth/refresh", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ refreshToken }),
+          })
+            .then((response) => {
+              if (response.ok) {
+                return response.json();
+              } else {
+                throw new Error("Refresh Token Error.");
+              }
+            })
+            .then((data) => {
+              localStorage.setItem(
+                "accessToken",
+                data.AuthenticationResult.AccessToken
+              );
+              displayStatusMessage("Token refreshed successfully.", "success");
+            })
+            .catch((error) => {
+              redirectToLogin();
+            });
+        }
+      }
+
+      document
+        .getElementById("refresh-button")
+        .addEventListener("click", function () {
+          checkAndRefreshToken();
+        });
+
+      checkAndRefreshToken();
+    </script>
+  </body>
+</html>
