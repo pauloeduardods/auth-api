@@ -35,7 +35,7 @@ func NewLogger(env string) (*ZapLogger, error) {
 		return nil, fmt.Errorf("failed to create zap logger: %w", err)
 	}
 
-	logger = logger.With(zap.String("release", release))
+	logger = logger.With(zap.String("release", release)).WithOptions(zap.AddCallerSkip(1))
 	defer logger.Sync()
 	sugar := logger.Sugar()
 
