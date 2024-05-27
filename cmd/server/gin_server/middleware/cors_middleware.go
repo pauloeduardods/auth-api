@@ -13,6 +13,15 @@ type Cors struct {
 	Credentials bool
 }
 
+func NewCors(origin, methods, headers string, credentials bool) *Cors {
+	return &Cors{
+		Origin:      origin,
+		Methods:     methods,
+		Headers:     headers,
+		Credentials: credentials,
+	}
+}
+
 func (co *Cors) CorsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", co.Origin)

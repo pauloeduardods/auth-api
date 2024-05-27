@@ -1,4 +1,4 @@
-package jwtToken
+package jwt_verify
 
 import (
 	"crypto/rsa"
@@ -14,7 +14,14 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type JwtToken struct {
+type JWTVerify interface {
+	CacheJWK() error
+	ParseJWT(tokenString string) (*jwt.Token, error)
+	JWK() *JWK
+	JWKURL() string
+}
+
+type jwtVerify struct {
 	jwk               *JWK
 	jwkURL            string
 	cognitoRegion     string
@@ -32,8 +39,8 @@ type JWK struct {
 	} `json:"keys"`
 }
 
-func NewAuth(cognitoRegion, cognitoUserPoolID string, logger logger.Logger) *JwtToken {
-	a := &JwtToken{
+func NewAuth(cognitoRegion, cognitoUserPoolID string, logger logger.Logger) JWTVerify {
+	a := &jwtVerify{
 		cognitoRegion:     cognitoRegion,
 		cognitoUserPoolID: cognitoUserPoolID,
 		log:               logger,
@@ -44,7 +51,7 @@ func NewAuth(cognitoRegion, cognitoUserPoolID string, logger logger.Logger) *Jwt
 	return a
 }
 
-func (a *JwtToken) CacheJWK() error {
+func (a *jwtVerify) CacheJWK() error { // Check when we need to cache the JWK
 	req, err := http.NewRequest("GET", a.jwkURL, nil)
 	if err != nil {
 		a.log.Error("Error creating JWK request %v", err)
@@ -77,7 +84,7 @@ func (a *JwtToken) CacheJWK() error {
 	return nil
 }
 
-func (a *JwtToken) ParseJWT(tokenString string) (*jwt.Token, error) {
+func (a *jwtVerify) ParseJWT(tokenString string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		key, err := convertKey(a.jwk.Keys[1].E, a.jwk.Keys[1].N)
 		return key, err
@@ -90,11 +97,11 @@ func (a *JwtToken) ParseJWT(tokenString string) (*jwt.Token, error) {
 	return token, nil
 }
 
-func (a *JwtToken) JWK() *JWK {
+func (a *jwtVerify) JWK() *JWK {
 	return a.jwk
 }
 
-func (a *JwtToken) JWKURL() string {
+func (a *jwtVerify) JWKURL() string {
 	return a.jwkURL
 }
 

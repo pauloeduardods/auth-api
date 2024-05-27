@@ -1,8 +1,8 @@
-BINARY=bin/monitoring-system-server.out
+BINARY=bin/monitoring-system.out
 
-API_DIR=./api
 CMD_DIR=./cmd
 CONFIG_DIR=./config
+DOMAIN_DIR=./domain
 INTERNAL_DIR=./internal
 PKG_DIR=./pkg
 
@@ -21,10 +21,10 @@ build: fmt vet
 	$(GO) build -o $(BINARY) $(CMD_DIR)/main.go
 
 run: build
-	APP_ENV=$(APP_ENV) HOST=$(HOST) PORT=$(PORT) COGNITO_CLIENT_ID=$(COGNITO_CLIENT_ID) COGNITO_USER_POOL_ID=$(COGNITO_USER_POOL_ID) REGION=$(REGION) $(BINARY)
+	$(BINARY)
 
 fmt:
-	$(GOFMT) -w $(CMD_DIR) $(CONFIG_DIR) $(INTERNAL_DIR) $(PKG_DIR) $(API_DIR)
+	$(GOFMT) -w $(CMD_DIR) $(CONFIG_DIR) $(DOMAIN_DIR) $(INTERNAL_DIR) $(PKG_DIR)
 
 vet:
 	$(GO) vet $(PKGS)

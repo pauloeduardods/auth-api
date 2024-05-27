@@ -3,36 +3,38 @@ package main
 import (
 	"context"
 	"fmt"
+	"monitoring-system/server/cmd/factory"
 	"monitoring-system/server/cmd/server"
 	"monitoring-system/server/config"
 	"monitoring-system/server/pkg/logger"
-	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
-
-	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 )
 
+// type Application struct {
+// 	logger  logger.Logger
+// 	storage storage.Storage
+// 	config  *config.Config
+// 	ctx     context.Context
+// 	cm      camera_manager.CameraManager
+// 	sqlDB   *sql.DB
+// 	modules *modules.Modules
+// }
+
 func main() {
-	os.Exit(start())
-}
-
-func start() int {
-	appConfig, err := config.LoadConfig()
+	appConfig, err := config.LoadConfig(".")
 	if err != nil {
-		fmt.Println("Error loading config:", err)
-		return 1
+		fmt.Printf("Error loading configuration %v", err)
+		return
 	}
 
-	logger, err := logger.NewLogger(appConfig.AppEnv)
+	logger, err := logger.NewLogger(appConfig.Env)
 	if err != nil {
-		fmt.Println("Error setting up the logger:", err)
-		return 1
+		fmt.Printf("Error creating logger %v", err)
+		return
 	}
-	//TODO REMOVE
-	logger.GetZapLogger().Info("Starting server", zap.String("host", appConfig.Host), zap.Int("port", appConfig.Port))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -46,36 +48,31 @@ func start() int {
 		cancel()
 	}()
 
-	awsConfig, err := config.NewAWSConfig(ctx, appConfig, logger)
+	awsConfig, err := config.LoadAwsConfig(ctx, appConfig.Aws, logger)
 	if err != nil {
-		logger.Info("Error creating AWS config %v", err)
-		return 1
+		logger.Error("Error loading AWS configuration %v", err)
+		return
 	}
 
-	s := server.New(ctx, awsConfig, appConfig, logger)
+	factory, err := factory.New(ctx, *awsConfig, *appConfig)
+	if err != nil {
+		logger.Error("Error creating factory %v", err)
+		return
+	}
 
-	eg, ctx := errgroup.WithContext(ctx)
+	server := server.New(ctx, awsConfig, appConfig, logger, factory)
 
-	eg.Go(func() error {
-		if err := s.Start(); err != nil && err != http.ErrServerClosed {
-			logger.Info("Error starting server %v", err)
-			return err
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := server.Start(); err != nil {
+			logger.Error("Error starting server %v", err)
 		}
-		return nil
-	})
+	}()
+
+	wg.Wait()
 
 	<-ctx.Done()
-
-	eg.Go(func() error {
-		if err := s.Stop(); err != nil {
-			logger.Info("Error stopping server %v", err)
-			return err
-		}
-		return nil
-	})
-
-	if err := eg.Wait(); err != nil {
-		return 1
-	}
-	return 0
+	os.Exit(0)
 }

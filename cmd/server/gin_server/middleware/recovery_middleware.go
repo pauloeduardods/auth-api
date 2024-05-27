@@ -13,6 +13,5 @@ func RecoveryHandler(log logger.Logger) gin.RecoveryFunc {
 		log.Error("Error occurred %v", err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"message": "Service Unavailable"})
 		c.Abort()
-		return
 	}
 }

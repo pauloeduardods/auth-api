@@ -1,15 +1,12 @@
 package middleware
 
 import (
-	"net/http"
-
 	"monitoring-system/server/pkg/app_error"
 	"monitoring-system/server/pkg/logger"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/maragudk/env"
-	"go.uber.org/zap"
 )
 
 func ErrorHandler(log logger.Logger) gin.HandlerFunc {
@@ -32,14 +29,8 @@ func ErrorHandler(log logger.Logger) gin.HandlerFunc {
 				c.Abort()
 				return
 			default:
-				appEnv := env.GetStringOrDefault("APP_ENV", "development")
-				log.Error("Error occurred %v", zap.Error(e))
-				if appEnv == "development" {
-					c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"message": e.Error()})
-					c.Abort()
-					return
-				}
-				c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"message": "Service Unavailable"})
+				log.Error("Error occurred %v", e)
+				c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"message": e.Error()})
 				c.Abort()
 			}
 		}

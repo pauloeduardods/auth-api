@@ -2,55 +2,43 @@ package server
 
 import (
 	"context"
+	"monitoring-system/server/cmd/factory"
+	"monitoring-system/server/cmd/server/gin_server"
 	"monitoring-system/server/config"
-	"monitoring-system/server/pkg/jwtToken"
 	"monitoring-system/server/pkg/logger"
 	"monitoring-system/server/pkg/validator"
 	"net/http"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	cognito "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
-	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
-	log           logger.Logger
-	appConfig     *config.AppConfig
-	gin           *gin.Engine
-	cognitoClient *cognito.Client
-	server        *http.Server
-	jwtToken      *jwtToken.JwtToken
-	validator     validator.Validator
-	ctx           context.Context
+	log        logger.Logger
+	config     *config.Config
+	gin_server *gin_server.Gin
+	server     *http.Server
+	validator  validator.Validator
+	ctx        context.Context
 }
 
-func New(ctx context.Context, awsConfig *aws.Config, appConfig *config.AppConfig, logger logger.Logger) *Server {
-	gin := gin.Default()
-
-	cognito := cognito.New(cognito.Options{
-		Credentials: awsConfig.Credentials,
-		Region:      awsConfig.Region,
-	})
-
-	jwtService := jwtToken.NewAuth(appConfig.Region, appConfig.CognitoUserPoolID, logger)
+func New(ctx context.Context, awsConfig *aws.Config, config *config.Config, logger logger.Logger, factory *factory.Factory) *Server {
+	gin := gin_server.New(ctx, logger, factory, validator.NewValidatorImpl())
 
 	return &Server{
-		appConfig:     appConfig,
-		gin:           gin,
-		cognitoClient: cognito,
-		jwtToken:      jwtService,
-		log:           logger,
-		validator:     validator.NewValidatorImpl(),
-		ctx:           ctx,
+		config:     config,
+		gin_server: gin,
+		log:        logger,
+		validator:  validator.NewValidatorImpl(),
+		ctx:        ctx,
 	}
 }
 
 func (s *Server) Start() error {
-	s.log.Info("Starting server %s:%d", s.appConfig.Host, s.appConfig.Port)
-	s.SetupCors()
-	s.SetupMiddlewares()
-	s.SetupApi()
+	s.log.Info("Starting server %s:%d", s.config.Api.Host, s.config.Api.Port)
+
+	s.gin_server.SetupMiddlewares()
+	s.gin_server.SetupApi()
 
 	go func() {
 		<-s.ctx.Done()
@@ -63,11 +51,16 @@ func (s *Server) Start() error {
 	}()
 
 	s.server = &http.Server{
-		Addr:    s.appConfig.Host + ":" + strconv.Itoa(s.appConfig.Port),
-		Handler: s.gin,
+		Addr:    s.config.Api.Host + ":" + strconv.Itoa(s.config.Api.Port),
+		Handler: s.gin_server.Gin,
 	}
 
-	return s.server.ListenAndServe()
+	err := s.server.ListenAndServe()
+	if err != nil {
+		s.log.Error("Error starting server: %v", err)
+		return err
+	}
+	return nil
 }
 
 func (s *Server) Stop() error {

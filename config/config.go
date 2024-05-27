@@ -1,80 +1,60 @@
 package config
 
 import (
-	"context"
 	"fmt"
-	"monitoring-system/server/pkg/logger"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/smithy-go/logging"
-	"github.com/maragudk/env"
+	"github.com/spf13/viper"
 )
 
-type AppConfig struct {
-	Host              string
-	Port              int
-	CognitoClientId   string
-	Region            string
-	CognitoUserPoolID string
-	AppEnv            string
+type AwsConfig struct {
+	Region            string `mapstructure:"region"`
+	CognitoClientId   string `mapstructure:"cognito_client_id"`
+	CognitoUserPoolID string `mapstructure:"cognito_user_pool_id"`
 }
 
-func LoadConfig() (*AppConfig, error) {
-	_ = env.Load(".env")
-
-	appEnv := env.GetStringOrDefault("APP_ENV", "development")
-	host := env.GetStringOrDefault("HOST", "localhost")
-	port := env.GetIntOrDefault("PORT", 4000)
-	cognitoClientId := env.GetStringOrDefault("COGNITO_CLIENT_ID", "")
-	cognitoUserPoolID := env.GetStringOrDefault("COGNITO_USER_POOL_ID", "")
-	region := env.GetStringOrDefault("REGION", "")
-
-	if host == "" {
-		return nil, fmt.Errorf("host is not defined")
-	}
-	if cognitoClientId == "" {
-		return nil, fmt.Errorf("cognitoClientId is not defined")
-	}
-	if cognitoUserPoolID == "" {
-		return nil, fmt.Errorf("CognitoUserPoolID is not defined")
-	}
-	if region == "" {
-		return nil, fmt.Errorf("region is not defined")
-	}
-
-	config := &AppConfig{
-		Host:              host,
-		Port:              port,
-		CognitoClientId:   cognitoClientId,
-		Region:            region,
-		CognitoUserPoolID: cognitoUserPoolID,
-		AppEnv:            appEnv,
-	}
-	return config, nil
+type ApiConfig struct {
+	Host string `mapstructure:"host"`
+	Port int    `mapstructure:"port"`
 }
 
-func NewAWSConfig(ctx context.Context, env *AppConfig, logger logger.Logger) (*aws.Config, error) {
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithRegion(env.Region),
-		config.WithLogger(createAWSLogAdapter(logger)),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error loading aws configuration: %v", err)
-	}
-
-	return &cfg, nil
+type Config struct {
+	Aws AwsConfig `mapstructure:"aws"`
+	Api ApiConfig `mapstructure:"api"`
+	Env string    `mapstructure:"env"`
 }
 
-func createAWSLogAdapter(log logger.Logger) logging.LoggerFunc {
-	return func(classification logging.Classification, format string, v ...interface{}) {
-		switch classification {
-		case logging.Debug:
-			log.Debug(format, v...)
-		case logging.Warn:
-			log.Warning(format, v...)
-		default:
-			log.Info(format, v...)
+func setDefaults() {
+	viper.SetDefault("env", "development")
+
+	viper.SetDefault("aws.region", "us-east-1")
+	viper.SetDefault("aws.cognito_client_id", "SET_ME")
+	viper.SetDefault("aws.cognito_user_pool_id", "SET_ME")
+
+	viper.SetDefault("api.host", "0.0.0.0")
+	viper.SetDefault("api.port", 4000)
+}
+
+func LoadConfig(configPath string) (*Config, error) {
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(configPath)
+
+	setDefaults()
+
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			if err := viper.SafeWriteConfigAs(configPath + "/config.yaml"); err != nil {
+				return nil, fmt.Errorf("error writing default config file: %v", err)
+			}
+		} else {
+			return nil, fmt.Errorf("error reading config file: %v", err)
 		}
 	}
+
+	var config Config
+	if err := viper.Unmarshal(&config); err != nil {
+		return nil, fmt.Errorf("error unmarshalling config: %v", err)
+	}
+
+	return &config, nil
 }

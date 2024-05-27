@@ -27,3 +27,4 @@ node_modules/
 /bin
 
 .env
+config.yaml
