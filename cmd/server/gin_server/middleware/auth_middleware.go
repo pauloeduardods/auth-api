@@ -22,7 +22,9 @@ func NewAuthMiddleware(a auth.Auth) AuthMiddleware {
 
 func (a *AuthMiddlewareImpl) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.GetHeader("Authorization")
+		auth := c.GetHeader("Authorization")
+
+		token := auth[7:] // remove Bearer from token
 
 		claims, err := a.auth.ValidateToken(token)
 		if err != nil {

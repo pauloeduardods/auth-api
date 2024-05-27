@@ -8,19 +8,26 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AuthHandler struct {
+type authHandler struct {
 	auth      auth.Auth
 	validator validator.Validator
 }
 
-func NewAuthHandler(a auth.Auth, validator validator.Validator) *AuthHandler {
-	return &AuthHandler{
+type AuthHandler interface {
+	Login() gin.HandlerFunc
+	SignUp() gin.HandlerFunc
+	ConfirmSignUp() gin.HandlerFunc
+	GetUser() gin.HandlerFunc
+}
+
+func NewAuthHandler(a auth.Auth, validator validator.Validator) AuthHandler {
+	return &authHandler{
 		auth:      a,
 		validator: validator,
 	}
 }
 
-func (a *AuthHandler) Login() gin.HandlerFunc {
+func (a *authHandler) Login() gin.HandlerFunc {
 	return func(g *gin.Context) {
 		var login auth.LoginInput
 		if err := g.ShouldBindJSON(&login); err != nil {
@@ -44,7 +51,7 @@ func (a *AuthHandler) Login() gin.HandlerFunc {
 	}
 }
 
-func (a *AuthHandler) SignUp() gin.HandlerFunc {
+func (a *authHandler) SignUp() gin.HandlerFunc {
 	return func(g *gin.Context) {
 		var signUp auth.SignUpInput
 		if err := g.ShouldBindJSON(&signUp); err != nil {
@@ -59,6 +66,54 @@ func (a *AuthHandler) SignUp() gin.HandlerFunc {
 		}
 
 		out, err := a.auth.SignUp(signUp)
+		if err != nil {
+			g.Error(err)
+			return
+		} else {
+			g.JSON(http.StatusOK, out)
+		}
+	}
+}
+
+func (a *authHandler) ConfirmSignUp() gin.HandlerFunc {
+	return func(g *gin.Context) {
+		var confirmSignUp auth.ConfirmSignUpInput
+		if err := g.ShouldBindJSON(&confirmSignUp); err != nil {
+			g.Error(err)
+			return
+		}
+
+		err := a.validator.Validate(&confirmSignUp)
+		if err != nil {
+			g.Error(err)
+			return
+		}
+
+		_, err = a.auth.ConfirmSignUp(confirmSignUp)
+		if err != nil {
+			g.Error(err)
+			return
+		} else {
+			g.JSON(http.StatusNoContent, gin.H{})
+		}
+	}
+}
+
+func (a *authHandler) GetUser() gin.HandlerFunc {
+	return func(g *gin.Context) {
+		var getUser auth.GetUserInput
+		if err := g.ShouldBindQuery(&getUser); err != nil {
+			g.Error(err)
+			return
+		}
+
+		err := a.validator.Validate(&getUser)
+		if err != nil {
+			g.Error(err)
+			return
+		}
+
+		out, err := a.auth.GetUser(getUser)
 		if err != nil {
 			g.Error(err)
 			return

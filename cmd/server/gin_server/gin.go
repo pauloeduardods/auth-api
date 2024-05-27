@@ -3,7 +3,6 @@ package gin_server
 import (
 	"context"
 	"monitoring-system/server/cmd/factory"
-	"monitoring-system/server/cmd/server/gin_server/handlers"
 	"monitoring-system/server/cmd/server/gin_server/middleware"
 	"monitoring-system/server/cmd/server/gin_server/routes"
 	"monitoring-system/server/pkg/logger"
@@ -48,16 +47,13 @@ func (s *Gin) SetupApi() error {
 
 	apiRoutes := s.Gin.Group("/api/v1")
 
-	//Middlewares
-	// authMiddleware := middleware.NewAuthMiddleware(s.factory.Internal.Auth)
+	// Middlewares
+	authMiddleware := middleware.NewAuthMiddleware(s.factory.Domain.Auth)
 
 	//Static files
 	s.Gin.StaticFS("/web", http.Dir("web/static"))
 
-	//Handlers
-	authHandler := handlers.NewAuthHandler(s.factory.Domain.Auth, s.validator)
-
 	//Routes
-	routes.ConfigAuthRoutes(apiRoutes, authHandler)
+	routes.NewRoutes(apiRoutes, s.factory, s.validator, authMiddleware).ConfigRoutes()
 	return nil
 }

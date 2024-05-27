@@ -2,13 +2,17 @@ package routes
 
 import (
 	"monitoring-system/server/cmd/server/gin_server/handlers"
-
-	"github.com/gin-gonic/gin"
 )
 
-func ConfigAuthRoutes(g *gin.RouterGroup, h *handlers.AuthHandler) {
-	authGroup := g.Group("/auth")
+type AuthRoutes struct {
+}
 
-	authGroup.POST("/login", h.Login())
-	authGroup.POST("/register", h.SignUp())
+func (r *routes) configAuthRoutes() {
+	handler := handlers.NewAuthHandler(r.factory.Domain.Auth, r.validator)
+	authGroup := r.gin.Group("/auth")
+
+	authGroup.POST("/login", handler.Login())
+	authGroup.POST("/register", handler.SignUp())
+	authGroup.POST("/confirm", handler.ConfirmSignUp())
+	authGroup.GET("/user", r.authMiddleware.AuthMiddleware(), handler.GetUser())
 }

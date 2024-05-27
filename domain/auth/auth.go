@@ -53,7 +53,10 @@ type GetUserOutput struct {
 }
 
 type GetUserInput struct {
-	AccessToken string `json:"accessToken" binding:"required"`
+	AccessToken string `json:"accessToken" form:"accessToken" binding:"required"`
 }
 
-type Claims struct{} // TODO: define the claims struct
+type Claims struct {
+	Email string `json:"email"`
+	Id    string `json:"id"`
+}

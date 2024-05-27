@@ -54,7 +54,7 @@ func main() {
 		return
 	}
 
-	factory, err := factory.New(ctx, *awsConfig, *appConfig)
+	factory, err := factory.New(ctx, logger, *awsConfig, *appConfig)
 	if err != nil {
 		logger.Error("Error creating factory %v", err)
 		return

@@ -16,7 +16,7 @@ import (
 
 type JWTVerify interface {
 	CacheJWK() error
-	ParseJWT(tokenString string) (*jwt.Token, error)
+	ParseJWT(tokenString string) (*jwt.Token, *Claims, error)
 	JWK() *JWK
 	JWKURL() string
 }
@@ -84,17 +84,23 @@ func (a *jwtVerify) CacheJWK() error { // Check when we need to cache the JWK
 	return nil
 }
 
-func (a *jwtVerify) ParseJWT(tokenString string) (*jwt.Token, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		key, err := convertKey(a.jwk.Keys[1].E, a.jwk.Keys[1].N)
+func (a *jwtVerify) ParseJWT(tokenString string) (*jwt.Token, *Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		key, err := convertKey(a.jwk.Keys[0].E, a.jwk.Keys[0].N)
 		return key, err
 	})
 	if err != nil {
 		a.log.Error("Error parsing JWT %v", err)
-		return token, err
+		return token, nil, err
 	}
 
-	return token, nil
+	claims, ok := token.Claims.(*Claims)
+	if !ok && !token.Valid {
+		a.log.Error("Error getting claims from JWT %v", err)
+		return token, nil, err
+	}
+
+	return token, claims, nil
 }
 
 func (a *jwtVerify) JWK() *JWK {

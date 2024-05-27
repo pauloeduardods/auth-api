@@ -2,7 +2,6 @@ package auth_cognito
 
 import (
 	"context"
-	"fmt"
 	"monitoring-system/server/domain/auth"
 	"monitoring-system/server/pkg/app_error"
 	"monitoring-system/server/pkg/jwt_verify"
@@ -20,11 +19,12 @@ type cognitoAuth struct {
 	jwtVerify jwt_verify.JWTVerify
 }
 
-func NewCognitoAuth(ctx context.Context, cognito *cognito.Client, clientId string) auth.CognitoAuth {
+func NewCognitoAuth(ctx context.Context, cognito *cognito.Client, clientId string, jwtVerify jwt_verify.JWTVerify) auth.CognitoAuth {
 	return &cognitoAuth{
-		client:   cognito,
-		clientId: clientId,
-		ctx:      ctx,
+		client:    cognito,
+		clientId:  clientId,
+		ctx:       ctx,
+		jwtVerify: jwtVerify,
 	}
 }
 
@@ -103,6 +103,13 @@ func (c *cognitoAuth) ConfirmSignUp(input auth.ConfirmSignUpInput) (*auth.Confir
 
 	_, err := c.client.ConfirmSignUp(c.ctx, confirmSignUp)
 	if err != nil {
+		errorType := err.Error()
+		if strings.Contains(errorType, "CodeMismatchException") {
+			return nil, app_error.NewApiError(400, "Invalid confirmation code")
+		}
+		if strings.Contains(errorType, "ExpiredCodeException") {
+			return nil, app_error.NewApiError(400, "Confirmation code expired")
+		}
 		return nil, err
 	}
 
@@ -116,6 +123,14 @@ func (c *cognitoAuth) GetUser(input auth.GetUserInput) (*auth.GetUserOutput, err
 	}
 	cognitoOut, err := c.client.GetUser(c.ctx, getUserInput)
 	if err != nil {
+		errorType := err.Error()
+		if strings.Contains(errorType, "NotAuthorizedException") {
+			return nil, app_error.NewApiError(401, "Invalid access token")
+		}
+		if strings.Contains(errorType, "UserNotFoundException") {
+			return nil, app_error.NewApiError(404, "User not found")
+		}
+
 		return nil, err
 	}
 
@@ -129,12 +144,18 @@ func (c *cognitoAuth) GetUser(input auth.GetUserInput) (*auth.GetUserOutput, err
 }
 
 func (c *cognitoAuth) ValidateToken(token string) (*auth.Claims, error) {
-	claims, err := c.jwtVerify.ParseJWT(token)
+	// err := c.jwtVerify.CacheJWK() //Check if this is the right place to cache the JWK
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	_, claims, err := c.jwtVerify.ParseJWT(token)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Printf("Claims: %v\n", claims) //TODO: Remove this
-
-	return &auth.Claims{}, nil
+	return &auth.Claims{
+		Email: claims.Email,
+		Id:    claims.Sub,
+	}, nil
 }
