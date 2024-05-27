@@ -29,3 +29,11 @@ func (a *auth) GetUser(input GetUserInput) (*GetUserOutput, error) {
 func (a *auth) ValidateToken(token string) (*Claims, error) {
 	return a.cognitoAuth.ValidateToken(token)
 }
+
+func (a *auth) AddGroup(input AddGroupInput) error {
+	return a.cognitoAuth.AddGroup(input)
+}
+
+func (a *auth) RemoveGroup(input RemoveGroupInput) error {
+	return a.cognitoAuth.RemoveGroup(input)
+}

@@ -7,23 +7,24 @@ import (
 )
 
 type Claims struct {
-	AccessToken     string `json:"accessToken"`
-	Alg             string `json:"alg"`
-	Kid             string `json:"kid"`
-	Aud             string `json:"aud"`
-	AuthTime        int64  `json:"auth_time"`
-	CognitoUsername string `json:"cognito:username"`
-	Email           string `json:"email"`
-	EmailVerified   bool   `json:"email_verified"`
-	EventID         string `json:"event_id"`
-	Exp             int64  `json:"exp"`
-	Iat             int64  `json:"iat"`
-	Iss             string `json:"iss"`
-	Jti             string `json:"jti"`
-	Name            string `json:"name"`
-	OriginJti       string `json:"origin_jti"`
-	Sub             string `json:"sub"`
-	TokenUse        string `json:"token_use"`
+	AccessToken     string   `json:"accessToken"`
+	Alg             string   `json:"alg"`
+	Kid             string   `json:"kid"`
+	Aud             string   `json:"aud"`
+	AuthTime        int64    `json:"auth_time"`
+	CognitoUsername string   `json:"cognito:username"`
+	UserGroups      []string `json:"cognito:groups"`
+	Email           string   `json:"email"`
+	EmailVerified   bool     `json:"email_verified"`
+	EventID         string   `json:"event_id"`
+	Exp             int64    `json:"exp"`
+	Iat             int64    `json:"iat"`
+	Iss             string   `json:"iss"`
+	Jti             string   `json:"jti"`
+	Name            string   `json:"name"`
+	OriginJti       string   `json:"origin_jti"`
+	Sub             string   `json:"sub"`
+	TokenUse        string   `json:"token_use"`
 }
 
 func (c *Claims) GetExpirationTime() (*jwt.NumericDate, error) {

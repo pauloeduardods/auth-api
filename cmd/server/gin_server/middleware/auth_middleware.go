@@ -7,7 +7,7 @@ import (
 )
 
 type AuthMiddleware interface {
-	AuthMiddleware() gin.HandlerFunc
+	AuthMiddleware(groupName auth.UserGroup) gin.HandlerFunc
 }
 
 type AuthMiddlewareImpl struct {
@@ -20,7 +20,7 @@ func NewAuthMiddleware(a auth.Auth) AuthMiddleware {
 	}
 }
 
-func (a *AuthMiddlewareImpl) AuthMiddleware() gin.HandlerFunc {
+func (a *AuthMiddlewareImpl) AuthMiddleware(groupName auth.UserGroup) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		auth := c.GetHeader("Authorization")
 
@@ -28,6 +28,19 @@ func (a *AuthMiddlewareImpl) AuthMiddleware() gin.HandlerFunc {
 
 		claims, err := a.auth.ValidateToken(token)
 		if err != nil {
+			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
+			return
+		}
+
+		fromGroup := false
+		for _, group := range claims.UserGroups {
+			if group == string(groupName) {
+				fromGroup = true
+				break
+			}
+		}
+
+		if !fromGroup {
 			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
 			return
 		}

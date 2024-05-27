@@ -15,7 +15,7 @@ type authHandler struct {
 
 type AuthHandler interface {
 	Login() gin.HandlerFunc
-	SignUp() gin.HandlerFunc
+	SignUp(groupName auth.UserGroup) gin.HandlerFunc
 	ConfirmSignUp() gin.HandlerFunc
 	GetUser() gin.HandlerFunc
 }
@@ -51,9 +51,11 @@ func (a *authHandler) Login() gin.HandlerFunc {
 	}
 }
 
-func (a *authHandler) SignUp() gin.HandlerFunc {
+func (a *authHandler) SignUp(groupName auth.UserGroup) gin.HandlerFunc {
 	return func(g *gin.Context) {
 		var signUp auth.SignUpInput
+		signUp.GroupName = groupName
+
 		if err := g.ShouldBindJSON(&signUp); err != nil {
 			g.Error(err)
 			return

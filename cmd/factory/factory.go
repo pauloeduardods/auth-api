@@ -33,8 +33,9 @@ func newInternalAuth(ctx context.Context, logger logger.Logger, awsConfig *aws.C
 	cognitoClient := cognitoidentityprovider.NewFromConfig(*awsConfig)
 	jwtVerify := jwt_verify.NewAuth(config.Aws.Region, config.Aws.CognitoUserPoolID, logger)
 	jwtVerify.CacheJWK() //TODO: Check when we need to cache the JWK and how to handle the error
-	return auth_cognito.NewCognitoAuth(ctx, cognitoClient, config.Aws.CognitoClientId, jwtVerify)
+	return auth_cognito.NewCognitoAuth(ctx, cognitoClient, config.Aws.CognitoClientId, jwtVerify, config.Aws.CognitoUserPoolID)
 }
+
 func New(ctx context.Context, logger logger.Logger, awsConfig aws.Config, config config.Config) (*Factory, error) {
 	internalAuth := newInternalAuth(ctx, logger, &awsConfig, config)
 	domainAuth := newDomainAuth(internalAuth)
