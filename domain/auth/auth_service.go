@@ -37,3 +37,7 @@ func (a *auth) AddGroup(input AddGroupInput) error {
 func (a *auth) RemoveGroup(input RemoveGroupInput) error {
 	return a.cognitoAuth.RemoveGroup(input)
 }
+
+func (a *auth) RefreshToken(input RefreshTokenInput) (*RefreshTokenOutput, error) {
+	return a.cognitoAuth.RefreshToken(input)
+}

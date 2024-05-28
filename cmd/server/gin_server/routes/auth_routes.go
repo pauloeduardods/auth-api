@@ -21,5 +21,6 @@ func (r *routes) configAuthRoutes() {
 	adminGroup.POST("/register", handler.SignUp(auth.Admin))
 
 	authGroup.POST("/login", handler.Login())
+	authGroup.POST("/refresh", handler.RefreshToken())
 	authGroup.POST("/confirm", handler.ConfirmSignUp())
 }

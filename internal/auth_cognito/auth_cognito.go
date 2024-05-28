@@ -5,6 +5,7 @@ import (
 	"monitoring-system/server/domain/auth"
 	"monitoring-system/server/pkg/app_error"
 	"monitoring-system/server/pkg/jwt_verify"
+	"monitoring-system/server/pkg/logger"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -18,9 +19,10 @@ type cognitoAuth struct {
 	userPoolId string
 	ctx        context.Context
 	jwtVerify  jwt_verify.JWTVerify
+	logger     logger.Logger
 }
 
-func NewCognitoAuth(ctx context.Context, cognito *cognito.Client, clientId string, jwtVerify jwt_verify.JWTVerify, userPoolId string) auth.CognitoAuth {
+func NewCognitoAuth(ctx context.Context, cognito *cognito.Client, clientId string, jwtVerify jwt_verify.JWTVerify, userPoolId string, logger logger.Logger) auth.CognitoAuth {
 	return &cognitoAuth{
 		client:     cognito,
 		clientId:   clientId,
@@ -51,6 +53,7 @@ func (c *cognitoAuth) Login(input auth.LoginInput) (*auth.LoginOutput, error) {
 		if strings.Contains(errorType, "UserNotConfirmedException") {
 			return nil, app_error.NewApiError(401, "User not confirmed")
 		}
+		c.logger.Error("Cognito login error", err)
 		return nil, err
 	}
 	out := &auth.LoginOutput{
@@ -80,6 +83,7 @@ func (c *cognitoAuth) SignUp(input auth.SignUpInput) (*auth.SignUpOutput, error)
 		if strings.Contains(errorType, "UsernameExistsException") {
 			return nil, app_error.NewApiError(409, "Username already exists")
 		}
+		c.logger.Error("Cognito signup error", err)
 		return nil, err
 	}
 
@@ -115,6 +119,7 @@ func (c *cognitoAuth) ConfirmSignUp(input auth.ConfirmSignUpInput) (*auth.Confir
 		if strings.Contains(errorType, "ExpiredCodeException") {
 			return nil, app_error.NewApiError(400, "Confirmation code expired")
 		}
+		c.logger.Error("Cognito confirm signup error", err)
 		return nil, err
 	}
 
@@ -134,7 +139,7 @@ func (c *cognitoAuth) GetUser(input auth.GetUserInput) (*auth.GetUserOutput, err
 		if strings.Contains(errorType, "UserNotFoundException") {
 			return nil, app_error.NewApiError(404, "User not found")
 		}
-
+		c.logger.Error("Cognito get user error", err)
 		return nil, err
 	}
 
@@ -175,6 +180,7 @@ func (c *cognitoAuth) AddGroup(input auth.AddGroupInput) error {
 		if strings.Contains(errorType, "ResourceNotFoundException") {
 			return app_error.NewApiError(404, "Group not found")
 		}
+		c.logger.Error("Cognito add group error", err)
 		return err
 	}
 
@@ -197,8 +203,35 @@ func (c *cognitoAuth) RemoveGroup(input auth.RemoveGroupInput) error {
 		if strings.Contains(errorType, "ResourceNotFoundException") {
 			return app_error.NewApiError(404, "Group not found")
 		}
+		c.logger.Error("Cognito remove group error", err)
 		return err
 	}
 
 	return nil
+}
+
+func (c *cognitoAuth) RefreshToken(input auth.RefreshTokenInput) (*auth.RefreshTokenOutput, error) {
+	refreshTokenInput := &cognito.InitiateAuthInput{
+		AuthFlow: "REFRESH_TOKEN_AUTH",
+		AuthParameters: map[string]string{
+			"REFRESH_TOKEN": input.RefreshToken,
+		},
+		ClientId: aws.String(c.clientId),
+	}
+	cognitoOut, err := c.client.InitiateAuth(c.ctx, refreshTokenInput)
+	if err != nil {
+		errorType := err.Error()
+		if strings.Contains(errorType, "NotAuthorizedException") {
+			return nil, app_error.NewApiError(401, "Invalid refresh token")
+		}
+		c.logger.Error("Cognito refresh token error", err)
+		return nil, err
+	}
+
+	out := &auth.RefreshTokenOutput{
+		AccessToken: *cognitoOut.AuthenticationResult.AccessToken,
+		IdToken:     *cognitoOut.AuthenticationResult.IdToken,
+	}
+
+	return out, nil
 }

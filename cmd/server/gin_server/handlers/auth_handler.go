@@ -18,6 +18,7 @@ type AuthHandler interface {
 	SignUp(groupName auth.UserGroup) gin.HandlerFunc
 	ConfirmSignUp() gin.HandlerFunc
 	GetUser() gin.HandlerFunc
+	RefreshToken() gin.HandlerFunc
 }
 
 func NewAuthHandler(a auth.Auth, validator validator.Validator) AuthHandler {
@@ -27,14 +28,14 @@ func NewAuthHandler(a auth.Auth, validator validator.Validator) AuthHandler {
 	}
 }
 
-type LoginInput struct {
+type loginInput struct {
 	Username string `json:"username" binding:"required" validate:"email"`
 	Password string `json:"password" binding:"required" validate:"min=8"`
 }
 
 func (a *authHandler) Login() gin.HandlerFunc {
 	return func(g *gin.Context) {
-		var login LoginInput
+		var login loginInput
 		if err := g.ShouldBindJSON(&login); err != nil {
 			g.Error(err)
 			return
@@ -56,7 +57,7 @@ func (a *authHandler) Login() gin.HandlerFunc {
 	}
 }
 
-type SignUpInput struct {
+type signUpInput struct {
 	Username  string         `json:"username" binding:"required" validate:"email"`
 	Password  string         `json:"password" binding:"required" validate:"min=8"`
 	Name      string         `json:"name" binding:"required" validate:"min=3,max=50"`
@@ -65,7 +66,7 @@ type SignUpInput struct {
 
 func (a *authHandler) SignUp(groupName auth.UserGroup) gin.HandlerFunc {
 	return func(g *gin.Context) {
-		var signUp SignUpInput
+		var signUp signUpInput
 		signUp.GroupName = groupName
 
 		if err := g.ShouldBindJSON(&signUp); err != nil {
@@ -89,14 +90,14 @@ func (a *authHandler) SignUp(groupName auth.UserGroup) gin.HandlerFunc {
 	}
 }
 
-type ConfirmSignUpInput struct {
+type confirmSignUpInput struct {
 	Username string `json:"username" binding:"required" validate:"email"`
 	Code     string `json:"code" binding:"required" validate:"numeric"`
 }
 
 func (a *authHandler) ConfirmSignUp() gin.HandlerFunc {
 	return func(g *gin.Context) {
-		var confirmSignUp ConfirmSignUpInput
+		var confirmSignUp confirmSignUpInput
 		if err := g.ShouldBindJSON(&confirmSignUp); err != nil {
 			g.Error(err)
 			return
@@ -118,13 +119,13 @@ func (a *authHandler) ConfirmSignUp() gin.HandlerFunc {
 	}
 }
 
-type GetUserInput struct {
-	AccessToken string `json:"accessToken" form:"accessToken" binding:"required"`
+type getUserInput struct {
+	AccessToken string `form:"accessToken" binding:"required"`
 }
 
 func (a *authHandler) GetUser() gin.HandlerFunc {
 	return func(g *gin.Context) {
-		var getUser GetUserInput
+		var getUser getUserInput
 		if err := g.ShouldBindQuery(&getUser); err != nil {
 			g.Error(err)
 			return
@@ -137,6 +138,34 @@ func (a *authHandler) GetUser() gin.HandlerFunc {
 		}
 
 		out, err := a.auth.GetUser(auth.NewGetUserInput(getUser.AccessToken))
+		if err != nil {
+			g.Error(err)
+			return
+		} else {
+			g.JSON(http.StatusOK, out)
+		}
+	}
+}
+
+type refreshTokenInput struct {
+	RefreshToken string `json:"refreshToken" binding:"required"`
+}
+
+func (a *authHandler) RefreshToken() gin.HandlerFunc {
+	return func(g *gin.Context) {
+		var refreshToken refreshTokenInput
+		if err := g.ShouldBindJSON(&refreshToken); err != nil {
+			g.Error(err)
+			return
+		}
+
+		err := a.validator.Validate(&refreshToken)
+		if err != nil {
+			g.Error(err)
+			return
+		}
+
+		out, err := a.auth.RefreshToken(auth.NewRefreshTokenInput(refreshToken.RefreshToken))
 		if err != nil {
 			g.Error(err)
 			return

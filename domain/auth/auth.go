@@ -18,6 +18,7 @@ type Auth interface {
 	ValidateToken(token string) (*Claims, error)
 	AddGroup(AddGroupInput) error
 	RemoveGroup(RemoveGroupInput) error
+	RefreshToken(RefreshTokenInput) (*RefreshTokenOutput, error)
 }
 
 type CognitoAuth interface {
@@ -29,6 +30,7 @@ type CognitoAuth interface {
 	ValidateToken(token string) (*Claims, error)
 	AddGroup(AddGroupInput) error
 	RemoveGroup(RemoveGroupInput) error
+	RefreshToken(RefreshTokenInput) (*RefreshTokenOutput, error)
 }
 
 type Claims struct {
@@ -101,6 +103,21 @@ func NewGetUserInput(accessToken string) GetUserInput {
 	return GetUserInput{
 		AccessToken: accessToken,
 	}
+}
+
+type RefreshTokenInput struct {
+	RefreshToken string
+}
+
+func NewRefreshTokenInput(refreshToken string) RefreshTokenInput {
+	return RefreshTokenInput{
+		RefreshToken: refreshToken,
+	}
+}
+
+type RefreshTokenOutput struct {
+	AccessToken string `json:"accessToken"`
+	IdToken     string `json:"idToken"`
 }
 
 type GetUserOutput struct {
