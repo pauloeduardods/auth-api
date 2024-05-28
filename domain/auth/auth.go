@@ -1,5 +1,14 @@
 package auth
 
+import "strings"
+
+type UserGroup string
+
+const (
+	Admin UserGroup = "Admin"
+	User  UserGroup = "User"
+)
+
 type Auth interface {
 	Login(LoginInput) (*LoginOutput, error)
 	SignUp(SignUpInput) (*SignUpOutput, error)
@@ -22,12 +31,24 @@ type CognitoAuth interface {
 	RemoveGroup(RemoveGroupInput) error
 }
 
-type UserGroup string
+type Claims struct {
+	Email      string   `json:"email"`
+	Id         string   `json:"id"`
+	UserGroups []string `json:"groups"`
+}
 
-const (
-	Admin UserGroup = "Admin"
-	User  UserGroup = "User"
-)
+type LoginInput struct {
+	Username string
+	Password string
+}
+
+func NewLoginInput(username, password string) LoginInput {
+	lowerCaseUsername := strings.ToLower(username)
+	return LoginInput{
+		Username: lowerCaseUsername,
+		Password: password,
+	}
+}
 
 type LoginOutput struct {
 	AccessToken  string `json:"accessToken"`
@@ -35,28 +56,51 @@ type LoginOutput struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
-type LoginInput struct {
-	Username string `json:"username" binding:"required" validate:"email"`
-	Password string `json:"password" binding:"required" validate:"min=8"`
+type SignUpInput struct {
+	Username  string
+	Password  string
+	Name      string
+	GroupName UserGroup
+}
+
+func NewSignUpInput(username, password, name string, groupName UserGroup) SignUpInput {
+	lowerCaseUsername := strings.ToLower(username)
+	return SignUpInput{
+		Username:  lowerCaseUsername,
+		Password:  password,
+		Name:      name,
+		GroupName: groupName,
+	}
 }
 
 type SignUpOutput struct {
 	IsConfirmed bool `json:"isConfirmed"`
 }
 
-type SignUpInput struct {
-	Username  string    `json:"username" binding:"required" validate:"email"`
-	Password  string    `json:"password" binding:"required" validate:"min=8"`
-	Name      string    `json:"name" binding:"required" validate:"min=3,max=50"`
-	GroupName UserGroup `json:"groupName" binding:"required"`
+type ConfirmSignUpInput struct {
+	Username string
+	Code     string
+}
+
+func NewConfirmSignUpInput(username, code string) ConfirmSignUpInput {
+	lowerCaseUsername := strings.ToLower(username)
+	return ConfirmSignUpInput{
+		Username: lowerCaseUsername,
+		Code:     code,
+	}
 }
 
 type ConfirmSignUpOutput struct {
 }
 
-type ConfirmSignUpInput struct {
-	Username string `json:"username" binding:"required" validate:"email"`
-	Code     string `json:"code" binding:"required" validate:"numeric"`
+type GetUserInput struct {
+	AccessToken string
+}
+
+func NewGetUserInput(accessToken string) GetUserInput {
+	return GetUserInput{
+		AccessToken: accessToken,
+	}
 }
 
 type GetUserOutput struct {
@@ -64,22 +108,12 @@ type GetUserOutput struct {
 	Name     string `json:"name"`
 }
 
-type GetUserInput struct {
-	AccessToken string `json:"accessToken" form:"accessToken" binding:"required"`
-}
-
 type AddGroupInput struct {
-	Username  string    `json:"username"`
-	GroupName UserGroup `json:"groupName"`
+	Username  string
+	GroupName UserGroup
 }
 
 type RemoveGroupInput struct {
-	Username  string    `json:"username"`
-	GroupName UserGroup `json:"groupName"`
-}
-
-type Claims struct {
-	Email      string   `json:"email"`
-	Id         string   `json:"id"`
-	UserGroups []string `json:"groups"`
+	Username  string
+	GroupName UserGroup
 }

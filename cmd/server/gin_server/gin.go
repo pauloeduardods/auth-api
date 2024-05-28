@@ -51,7 +51,7 @@ func (s *Gin) SetupApi() error {
 	authMiddleware := middleware.NewAuthMiddleware(s.factory.Domain.Auth)
 
 	//Static files
-	s.Gin.StaticFS("/web", http.Dir("web/static"))
+	s.Gin.StaticFS("/web", http.Dir("static"))
 
 	//Routes
 	routes.NewRoutes(apiRoutes, s.factory, s.validator, authMiddleware).ConfigRoutes()

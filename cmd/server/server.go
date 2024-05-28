@@ -57,6 +57,12 @@ func (s *Server) Start() error {
 
 	err := s.server.ListenAndServe()
 	if err != nil {
+		errType := err.Error()
+		if errType == "http: Server closed" {
+			s.log.Info("Server closed")
+			return nil
+		}
+
 		s.log.Error("Error starting server: %v", err)
 		return err
 	}
