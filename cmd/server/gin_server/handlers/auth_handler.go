@@ -15,10 +15,11 @@ type authHandler struct {
 
 type AuthHandler interface {
 	Login() gin.HandlerFunc
-	SignUp(groupName auth.UserGroup) gin.HandlerFunc
+	SignUp() gin.HandlerFunc
 	ConfirmSignUp() gin.HandlerFunc
 	GetUser() gin.HandlerFunc
 	RefreshToken() gin.HandlerFunc
+	CreateAdmin() gin.HandlerFunc
 }
 
 func NewAuthHandler(a auth.Auth, validator validator.Validator) AuthHandler {
@@ -29,7 +30,7 @@ func NewAuthHandler(a auth.Auth, validator validator.Validator) AuthHandler {
 }
 
 type loginInput struct {
-	Username string `json:"username" binding:"required" validate:"email"`
+	Email    string `json:"email" binding:"required" validate:"email"`
 	Password string `json:"password" binding:"required" validate:"min=8"`
 }
 
@@ -47,7 +48,7 @@ func (a *authHandler) Login() gin.HandlerFunc {
 			return
 		}
 
-		out, err := a.auth.Login(auth.NewLoginInput(login.Username, login.Password))
+		out, err := a.auth.Login(auth.NewLoginInput(login.Email, login.Password))
 		if err != nil {
 			g.Error(err)
 			return
@@ -58,16 +59,14 @@ func (a *authHandler) Login() gin.HandlerFunc {
 }
 
 type signUpInput struct {
-	Username  string         `json:"username" binding:"required" validate:"email"`
-	Password  string         `json:"password" binding:"required" validate:"min=8"`
-	Name      string         `json:"name" binding:"required" validate:"min=3,max=50"`
-	GroupName auth.UserGroup `json:"groupName" binding:"required"`
+	Email    string `json:"email" binding:"required" validate:"email"`
+	Password string `json:"password" binding:"required" validate:"min=8"`
+	Name     string `json:"name" binding:"required" validate:"min=3,max=50"`
 }
 
-func (a *authHandler) SignUp(groupName auth.UserGroup) gin.HandlerFunc {
+func (a *authHandler) SignUp() gin.HandlerFunc {
 	return func(g *gin.Context) {
 		var signUp signUpInput
-		signUp.GroupName = groupName
 
 		if err := g.ShouldBindJSON(&signUp); err != nil {
 			g.Error(err)
@@ -80,7 +79,7 @@ func (a *authHandler) SignUp(groupName auth.UserGroup) gin.HandlerFunc {
 			return
 		}
 
-		out, err := a.auth.SignUp(auth.NewSignUpInput(signUp.Username, signUp.Password, signUp.Name, signUp.GroupName))
+		out, err := a.auth.SignUp(auth.NewSignUpInput(signUp.Email, signUp.Password, signUp.Name))
 		if err != nil {
 			g.Error(err)
 			return
@@ -91,8 +90,8 @@ func (a *authHandler) SignUp(groupName auth.UserGroup) gin.HandlerFunc {
 }
 
 type confirmSignUpInput struct {
-	Username string `json:"username" binding:"required" validate:"email"`
-	Code     string `json:"code" binding:"required" validate:"numeric"`
+	Email string `json:"email" binding:"required" validate:"email"`
+	Code  string `json:"code" binding:"required" validate:"numeric"`
 }
 
 func (a *authHandler) ConfirmSignUp() gin.HandlerFunc {
@@ -109,7 +108,7 @@ func (a *authHandler) ConfirmSignUp() gin.HandlerFunc {
 			return
 		}
 
-		_, err = a.auth.ConfirmSignUp(auth.NewConfirmSignUpInput(confirmSignUp.Username, confirmSignUp.Code))
+		_, err = a.auth.ConfirmSignUp(auth.NewConfirmSignUpInput(confirmSignUp.Email, confirmSignUp.Code))
 		if err != nil {
 			g.Error(err)
 			return
@@ -166,6 +165,37 @@ func (a *authHandler) RefreshToken() gin.HandlerFunc {
 		}
 
 		out, err := a.auth.RefreshToken(auth.NewRefreshTokenInput(refreshToken.RefreshToken))
+		if err != nil {
+			g.Error(err)
+			return
+		} else {
+			g.JSON(http.StatusOK, out)
+		}
+	}
+}
+
+type createAdminInput struct {
+	Email    string `json:"email" binding:"required" validate:"email"`
+	Password string `json:"password" binding:"required" validate:"min=8"`
+	Name     string `json:"name" binding:"required" validate:"min=3,max=50"`
+}
+
+func (a *authHandler) CreateAdmin() gin.HandlerFunc {
+	return func(g *gin.Context) {
+		var createAdmin createAdminInput
+
+		if err := g.ShouldBindJSON(&createAdmin); err != nil {
+			g.Error(err)
+			return
+		}
+
+		err := a.validator.Validate(&createAdmin)
+		if err != nil {
+			g.Error(err)
+			return
+		}
+
+		out, err := a.auth.CreateAdmin(auth.NewCreateAdminInput(createAdmin.Email, createAdmin.Password, createAdmin.Name))
 		if err != nil {
 			g.Error(err)
 			return

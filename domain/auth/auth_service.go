@@ -41,3 +41,7 @@ func (a *auth) RemoveGroup(input RemoveGroupInput) error {
 func (a *auth) RefreshToken(input RefreshTokenInput) (*RefreshTokenOutput, error) {
 	return a.cognitoAuth.RefreshToken(input)
 }
+
+func (a *auth) CreateAdmin(input CreateAdminInput) (*CreateAdminOutput, error) {
+	return a.cognitoAuth.CreateAdmin(input)
+}

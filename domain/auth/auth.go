@@ -19,6 +19,7 @@ type Auth interface {
 	AddGroup(AddGroupInput) error
 	RemoveGroup(RemoveGroupInput) error
 	RefreshToken(RefreshTokenInput) (*RefreshTokenOutput, error)
+	CreateAdmin(CreateAdminInput) (*CreateAdminOutput, error)
 }
 
 type CognitoAuth interface {
@@ -31,6 +32,7 @@ type CognitoAuth interface {
 	AddGroup(AddGroupInput) error
 	RemoveGroup(RemoveGroupInput) error
 	RefreshToken(RefreshTokenInput) (*RefreshTokenOutput, error)
+	CreateAdmin(CreateAdminInput) (*CreateAdminOutput, error)
 }
 
 type Claims struct {
@@ -59,19 +61,17 @@ type LoginOutput struct {
 }
 
 type SignUpInput struct {
-	Username  string
-	Password  string
-	Name      string
-	GroupName UserGroup
+	Username string
+	Password string
+	Name     string
 }
 
-func NewSignUpInput(username, password, name string, groupName UserGroup) SignUpInput {
+func NewSignUpInput(username, password, name string) SignUpInput {
 	lowerCaseUsername := strings.ToLower(username)
 	return SignUpInput{
-		Username:  lowerCaseUsername,
-		Password:  password,
-		Name:      name,
-		GroupName: groupName,
+		Username: lowerCaseUsername,
+		Password: password,
+		Name:     name,
 	}
 }
 
@@ -133,4 +133,23 @@ type AddGroupInput struct {
 type RemoveGroupInput struct {
 	Username  string
 	GroupName UserGroup
+}
+
+type CreateAdminInput struct {
+	Password string
+	Name     string
+	Username string
+}
+
+func NewCreateAdminInput(username, password, name string) CreateAdminInput {
+	lowerCaseUsername := strings.ToLower(username)
+	return CreateAdminInput{
+		Password: password,
+		Name:     name,
+		Username: lowerCaseUsername,
+	}
+}
+
+type CreateAdminOutput struct {
+	Username string `json:"username"`
 }

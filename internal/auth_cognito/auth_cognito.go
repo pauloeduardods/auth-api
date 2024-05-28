@@ -29,6 +29,7 @@ func NewCognitoAuth(ctx context.Context, cognito *cognito.Client, clientId strin
 		ctx:        ctx,
 		jwtVerify:  jwtVerify,
 		userPoolId: userPoolId,
+		logger:     logger,
 	}
 }
 
@@ -56,6 +57,8 @@ func (c *cognitoAuth) Login(input auth.LoginInput) (*auth.LoginOutput, error) {
 		c.logger.Error("Cognito login error", err)
 		return nil, err
 	}
+
+	//TODO: fix error when user status === force change password
 	out := &auth.LoginOutput{
 		AccessToken:  *cognitoOut.AuthenticationResult.AccessToken,
 		RefreshToken: *cognitoOut.AuthenticationResult.RefreshToken,
@@ -72,6 +75,10 @@ func (c *cognitoAuth) SignUp(input auth.SignUpInput) (*auth.SignUpOutput, error)
 		Password: aws.String(input.Password),
 		UserAttributes: []types.AttributeType{
 			{
+				Name:  aws.String("email"),
+				Value: aws.String(input.Username),
+			},
+			{
 				Name:  aws.String("name"),
 				Value: aws.String(input.Name),
 			},
@@ -87,14 +94,12 @@ func (c *cognitoAuth) SignUp(input auth.SignUpInput) (*auth.SignUpOutput, error)
 		return nil, err
 	}
 
-	if input.GroupName != "" {
-		err = c.AddGroup(auth.AddGroupInput{
-			Username:  input.Username,
-			GroupName: input.GroupName,
-		})
-		if err != nil {
-			return nil, err
-		}
+	err = c.AddGroup(auth.AddGroupInput{
+		Username:  input.Username,
+		GroupName: auth.User,
+	})
+	if err != nil {
+		return nil, err //TODO: Rollback signup
 	}
 
 	out := &auth.SignUpOutput{
@@ -234,4 +239,48 @@ func (c *cognitoAuth) RefreshToken(input auth.RefreshTokenInput) (*auth.RefreshT
 	}
 
 	return out, nil
+}
+
+func (c *cognitoAuth) CreateAdmin(input auth.CreateAdminInput) (*auth.CreateAdminOutput, error) {
+	createUserInput := &cognito.AdminCreateUserInput{
+		UserPoolId: aws.String(c.userPoolId),
+		Username:   aws.String(input.Username),
+		UserAttributes: []types.AttributeType{
+			{
+				Name:  aws.String("email"),
+				Value: aws.String(input.Username),
+			},
+			{
+				Name:  aws.String("name"),
+				Value: aws.String(input.Name),
+			},
+		},
+		TemporaryPassword: aws.String(input.Password),
+		DesiredDeliveryMediums: []types.DeliveryMediumType{
+			types.DeliveryMediumTypeEmail,
+		},
+		ForceAliasCreation: true,
+	}
+
+	_, err := c.client.AdminCreateUser(c.ctx, createUserInput)
+	if err != nil {
+		errorType := err.Error()
+		if strings.Contains(errorType, "UsernameExistsException") {
+			return nil, app_error.NewApiError(409, "Username already exists")
+		}
+		c.logger.Error("Cognito admin create user error", err)
+		return nil, err
+	}
+
+	err = c.AddGroup(auth.AddGroupInput{
+		Username:  input.Username,
+		GroupName: auth.Admin,
+	})
+	if err != nil {
+		return nil, err //TODO: Rollback create admin
+	}
+
+	return &auth.CreateAdminOutput{
+		Username: input.Username,
+	}, nil
 }

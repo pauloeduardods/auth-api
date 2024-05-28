@@ -14,11 +14,11 @@ func (r *routes) configAuthRoutes() {
 
 	userGroup := authGroup.Group("/user")
 	userGroup.GET("/", r.authMiddleware.AuthMiddleware(auth.User), handler.GetUser())
-	userGroup.POST("/register", handler.SignUp(auth.User))
+	userGroup.POST("/register", handler.SignUp())
 
 	adminGroup := authGroup.Group("/admin")
 	adminGroup.Use(r.authMiddleware.AuthMiddleware(auth.Admin))
-	adminGroup.POST("/register", handler.SignUp(auth.Admin))
+	adminGroup.POST("/register", handler.CreateAdmin())
 
 	authGroup.POST("/login", handler.Login())
 	authGroup.POST("/refresh", handler.RefreshToken())
