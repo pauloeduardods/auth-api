@@ -2,12 +2,13 @@ package middleware
 
 import (
 	"monitoring-system/server/domain/auth"
+	"monitoring-system/server/pkg/app_error"
 
 	"github.com/gin-gonic/gin"
 )
 
 type AuthMiddleware interface {
-	AuthMiddleware(groupName auth.UserGroup) gin.HandlerFunc
+	AuthMiddleware(groupNames ...auth.UserGroup) gin.HandlerFunc
 }
 
 type AuthMiddlewareImpl struct {
@@ -20,28 +21,40 @@ func NewAuthMiddleware(a auth.Auth) AuthMiddleware {
 	}
 }
 
-func (a *AuthMiddlewareImpl) AuthMiddleware(groupName auth.UserGroup) gin.HandlerFunc {
+func (a *AuthMiddlewareImpl) AuthMiddleware(groupNames ...auth.UserGroup) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		auth := c.GetHeader("Authorization")
-
-		token := auth[7:] // remove Bearer from token
-
-		claims, err := a.auth.ValidateToken(token)
-		if err != nil {
-			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.Error(app_error.NewApiError(401, "Unauthorized"))
+			c.Abort()
 			return
 		}
 
-		fromGroup := false
+		token := authHeader[7:] // remove Bearer from token
+
+		claims, err := a.auth.ValidateToken(token)
+		if err != nil {
+			c.Error(app_error.NewApiError(401, "Unauthorized"))
+			c.Abort()
+			return
+		}
+
+		userGroups := make(map[string]struct{}, len(claims.UserGroups))
 		for _, group := range claims.UserGroups {
-			if group == string(groupName) {
-				fromGroup = true
+			userGroups[group] = struct{}{}
+		}
+
+		authorized := false
+		for _, groupName := range groupNames {
+			if _, exists := userGroups[string(groupName)]; exists {
+				authorized = true
 				break
 			}
 		}
 
-		if !fromGroup {
-			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
+		if !authorized {
+			c.Error(app_error.NewApiError(401, "Unauthorized"))
+			c.Abort()
 			return
 		}
 

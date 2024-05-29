@@ -13,16 +13,6 @@ import (
 	"syscall"
 )
 
-// type Application struct {
-// 	logger  logger.Logger
-// 	storage storage.Storage
-// 	config  *config.Config
-// 	ctx     context.Context
-// 	cm      camera_manager.CameraManager
-// 	sqlDB   *sql.DB
-// 	modules *modules.Modules
-// }
-
 func main() {
 	appConfig, err := config.LoadConfig(".")
 	if err != nil {

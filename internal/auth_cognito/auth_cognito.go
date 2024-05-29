@@ -33,6 +33,81 @@ func NewCognitoAuth(ctx context.Context, cognito *cognito.Client, clientId strin
 	}
 }
 
+func (c *cognitoAuth) AddMFA(input auth.AddMFAInput) (*auth.AddMFAOutput, error) {
+	associateSoftwareTokenInput := &cognito.AssociateSoftwareTokenInput{
+		AccessToken: aws.String(input.AccessToken),
+	}
+
+	associateSoftwareTokenOutput, err := c.client.AssociateSoftwareToken(c.ctx, associateSoftwareTokenInput)
+	if err != nil {
+		c.logger.Error("Cognito associate software token error", err)
+		return nil, app_error.NewApiError(500, "Failed to associate software token")
+	}
+
+	return &auth.AddMFAOutput{
+		SecretCode: *associateSoftwareTokenOutput.SecretCode,
+	}, nil
+}
+
+func (c *cognitoAuth) VerifyMFA(input auth.VerifyMFAInput) (*auth.LoginOutput, error) {
+	// verifySoftwareTokenInput := &cognito.VerifySoftwareTokenInput{
+	// 	UserCode:    aws.String(input.Code),
+	// 	AccessToken: aws.String(input.AccessToken),
+	// 	Session:     aws.String(input.Session),
+	// }
+
+	// verifySoftwareTokenOutput, err := c.client.VerifySoftwareToken(c.ctx, verifySoftwareTokenInput)
+	// if err != nil {
+	// 	c.logger.Error("Cognito verify software token error", err)
+	// 	return nil, app_error.NewApiError(400, "Failed to verify software token")
+	// }
+
+	// if verifySoftwareTokenOutput.Status != "SUCCESS" {
+	// 	return nil, app_error.NewApiError(400, "Invalid MFA code")
+	// }
+
+	respondToAuthChallengeInput := &cognito.RespondToAuthChallengeInput{
+		ChallengeName: "SOFTWARE_TOKEN_MFA",
+		ClientId:      aws.String(c.clientId),
+		Session:       aws.String(input.Session),
+		ChallengeResponses: map[string]string{
+			"USERNAME":                input.Username,
+			"SOFTWARE_TOKEN_MFA_CODE": input.Code,
+		},
+	}
+
+	cognitoOut, err := c.client.RespondToAuthChallenge(c.ctx, respondToAuthChallengeInput)
+	if err != nil {
+		c.logger.Error("Cognito respond to auth challenge error", err)
+		return nil, app_error.NewApiError(400, "Failed to respond to auth challenge")
+	}
+
+	return &auth.LoginOutput{
+		AccessToken:  *cognitoOut.AuthenticationResult.AccessToken,
+		RefreshToken: *cognitoOut.AuthenticationResult.RefreshToken,
+		IdToken:      *cognitoOut.AuthenticationResult.IdToken,
+	}, nil
+}
+
+func (c *cognitoAuth) RemoveMFA(input auth.RemoveMFAInput) error {
+	adminSetUserMFAPreferenceInput := &cognito.AdminSetUserMFAPreferenceInput{
+		UserPoolId: aws.String(c.userPoolId),
+		Username:   aws.String(input.Username),
+		SoftwareTokenMfaSettings: &types.SoftwareTokenMfaSettingsType{
+			Enabled:      false,
+			PreferredMfa: false,
+		},
+	}
+
+	_, err := c.client.AdminSetUserMFAPreference(c.ctx, adminSetUserMFAPreferenceInput)
+	if err != nil {
+		c.logger.Error("Cognito remove MFA error", err)
+		return app_error.NewApiError(500, "Failed to remove MFA")
+	}
+
+	return nil
+}
+
 func (c *cognitoAuth) Login(input auth.LoginInput) (*auth.LoginOutput, error) {
 	initiateAuthInput := &cognito.InitiateAuthInput{
 		AuthFlow: "USER_PASSWORD_AUTH",
@@ -58,7 +133,12 @@ func (c *cognitoAuth) Login(input auth.LoginInput) (*auth.LoginOutput, error) {
 		return nil, err
 	}
 
-	//TODO: fix error when user status === force change password
+	if cognitoOut.ChallengeName == "SOFTWARE_TOKEN_MFA" {
+		return &auth.LoginOutput{
+			Session: *cognitoOut.Session,
+		}, nil
+	}
+
 	out := &auth.LoginOutput{
 		AccessToken:  *cognitoOut.AuthenticationResult.AccessToken,
 		RefreshToken: *cognitoOut.AuthenticationResult.RefreshToken,

@@ -1,6 +1,8 @@
 package auth
 
-import "strings"
+import (
+	"strings"
+)
 
 type UserGroup string
 
@@ -12,7 +14,6 @@ const (
 type Auth interface {
 	Login(LoginInput) (*LoginOutput, error)
 	SignUp(SignUpInput) (*SignUpOutput, error)
-	// UserInformation(accessToken string) (*cognito.GetUserOutput, error)
 	ConfirmSignUp(ConfirmSignUpInput) (*ConfirmSignUpOutput, error)
 	GetUser(GetUserInput) (*GetUserOutput, error)
 	ValidateToken(token string) (*Claims, error)
@@ -20,12 +21,14 @@ type Auth interface {
 	RemoveGroup(RemoveGroupInput) error
 	RefreshToken(RefreshTokenInput) (*RefreshTokenOutput, error)
 	CreateAdmin(CreateAdminInput) (*CreateAdminOutput, error)
+	AddMFA(AddMFAInput) (*AddMFAOutput, error)
+	VerifyMFA(VerifyMFAInput) (*LoginOutput, error)
+	RemoveMFA(RemoveMFAInput) error
 }
 
 type CognitoAuth interface {
 	Login(LoginInput) (*LoginOutput, error)
 	SignUp(SignUpInput) (*SignUpOutput, error)
-	// UserInformation(accessToken string) (*cognito.GetUserOutput, error)
 	ConfirmSignUp(ConfirmSignUpInput) (*ConfirmSignUpOutput, error)
 	GetUser(GetUserInput) (*GetUserOutput, error)
 	ValidateToken(token string) (*Claims, error)
@@ -33,6 +36,9 @@ type CognitoAuth interface {
 	RemoveGroup(RemoveGroupInput) error
 	RefreshToken(RefreshTokenInput) (*RefreshTokenOutput, error)
 	CreateAdmin(CreateAdminInput) (*CreateAdminOutput, error)
+	AddMFA(AddMFAInput) (*AddMFAOutput, error)
+	VerifyMFA(VerifyMFAInput) (*LoginOutput, error)
+	RemoveMFA(RemoveMFAInput) error
 }
 
 type Claims struct {
@@ -55,9 +61,10 @@ func NewLoginInput(username, password string) LoginInput {
 }
 
 type LoginOutput struct {
-	AccessToken  string `json:"accessToken"`
-	IdToken      string `json:"idToken"`
-	RefreshToken string `json:"refreshToken"`
+	AccessToken  string `json:"accessToken,omitempty"`
+	IdToken      string `json:"idToken,omitempty"`
+	RefreshToken string `json:"refreshToken,omitempty"`
+	Session      string `json:"session,omitempty"`
 }
 
 type SignUpInput struct {
@@ -152,4 +159,45 @@ func NewCreateAdminInput(username, password, name string) CreateAdminInput {
 
 type CreateAdminOutput struct {
 	Username string `json:"username"`
+}
+
+type AddMFAInput struct {
+	AccessToken string
+}
+
+func NewAddMFAInput(accessToken string) AddMFAInput {
+	return AddMFAInput{
+		AccessToken: accessToken,
+	}
+}
+
+type AddMFAOutput struct {
+	SecretCode string `json:"secretCode"`
+}
+
+type VerifyMFAInput struct {
+	// AccessToken string
+	Code     string
+	Username string
+	Session  string
+}
+
+func NewVerifyMFAInput(code, username, session string) VerifyMFAInput {
+	return VerifyMFAInput{
+		// AccessToken: accessToken,
+		Code:     code,
+		Username: username,
+		Session:  session,
+	}
+}
+
+type RemoveMFAInput struct {
+	Username string
+}
+
+func NewRemoveMFAInput(username string) RemoveMFAInput {
+	lowerCaseUsername := strings.ToLower(username)
+	return RemoveMFAInput{
+		Username: lowerCaseUsername,
+	}
 }

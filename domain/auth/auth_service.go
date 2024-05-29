@@ -45,3 +45,15 @@ func (a *auth) RefreshToken(input RefreshTokenInput) (*RefreshTokenOutput, error
 func (a *auth) CreateAdmin(input CreateAdminInput) (*CreateAdminOutput, error) {
 	return a.cognitoAuth.CreateAdmin(input)
 }
+
+func (a *auth) AddMFA(input AddMFAInput) (*AddMFAOutput, error) {
+	return a.cognitoAuth.AddMFA(input)
+}
+
+func (a *auth) VerifyMFA(input VerifyMFAInput) (*LoginOutput, error) {
+	return a.cognitoAuth.VerifyMFA(input)
+}
+
+func (a *auth) RemoveMFA(input RemoveMFAInput) error {
+	return a.cognitoAuth.RemoveMFA(input)
+}

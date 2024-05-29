@@ -20,6 +20,9 @@ type AuthHandler interface {
 	GetUser() gin.HandlerFunc
 	RefreshToken() gin.HandlerFunc
 	CreateAdmin() gin.HandlerFunc
+	AddMfa() gin.HandlerFunc
+	VerifyMfa() gin.HandlerFunc
+	RemoveMfa() gin.HandlerFunc
 }
 
 func NewAuthHandler(a auth.Auth, validator validator.Validator) AuthHandler {
@@ -201,6 +204,93 @@ func (a *authHandler) CreateAdmin() gin.HandlerFunc {
 			return
 		} else {
 			g.JSON(http.StatusOK, out)
+		}
+	}
+}
+
+type addMfaInput struct {
+	AccessToken string `json:"accessToken" binding:"required"`
+}
+
+func (a *authHandler) AddMfa() gin.HandlerFunc {
+	return func(g *gin.Context) {
+		var addMfa addMfaInput
+		if err := g.ShouldBindJSON(&addMfa); err != nil {
+			g.Error(err)
+			return
+		}
+
+		err := a.validator.Validate(&addMfa)
+		if err != nil {
+			g.Error(err)
+			return
+		}
+
+		out, err := a.auth.AddMFA(auth.NewAddMFAInput(addMfa.AccessToken))
+		if err != nil {
+			g.Error(err)
+			return
+		} else {
+			g.JSON(http.StatusOK, out)
+		}
+	}
+}
+
+type verifyMfaInput struct {
+	Email string `json:"email" binding:"required" validate:"email"`
+	Code  string `json:"code" binding:"required" validate:"numeric"`
+	// AccessToken string `json:"accessToken,omitempty"`
+	Session string `json:"session,omitempty"`
+}
+
+func (a *authHandler) VerifyMfa() gin.HandlerFunc {
+	return func(g *gin.Context) {
+		var verifyMfa verifyMfaInput
+		if err := g.ShouldBindJSON(&verifyMfa); err != nil {
+			g.Error(err)
+			return
+		}
+
+		err := a.validator.Validate(&verifyMfa)
+		if err != nil {
+			g.Error(err)
+			return
+		}
+
+		out, err := a.auth.VerifyMFA(auth.NewVerifyMFAInput(verifyMfa.Code, verifyMfa.Email, verifyMfa.Session))
+		if err != nil {
+			g.Error(err)
+			return
+		} else {
+			g.JSON(http.StatusOK, out)
+		}
+	}
+}
+
+type removeMfaInput struct {
+	Username string `json:"username" binding:"required"`
+}
+
+func (a *authHandler) RemoveMfa() gin.HandlerFunc {
+	return func(g *gin.Context) {
+		var removeMfa removeMfaInput
+		if err := g.ShouldBindJSON(&removeMfa); err != nil {
+			g.Error(err)
+			return
+		}
+
+		err := a.validator.Validate(&removeMfa)
+		if err != nil {
+			g.Error(err)
+			return
+		}
+
+		err = a.auth.RemoveMFA(auth.NewRemoveMFAInput(removeMfa.Username))
+		if err != nil {
+			g.Error(err)
+			return
+		} else {
+			g.JSON(http.StatusNoContent, gin.H{})
 		}
 	}
 }
