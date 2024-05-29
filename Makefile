@@ -1,10 +1,10 @@
 BINARY=bin/monitoring-system.out
 
-CMD_DIR=./cmd
-CONFIG_DIR=./config
-DOMAIN_DIR=./domain
-INTERNAL_DIR=./internal
-PKG_DIR=./pkg
+CMD_DIR=./src/cmd
+CONFIG_DIR=./src/config
+DOMAIN_DIR=./src/domain
+INTERNAL_DIR=./src/internal
+PKG_DIR=./src/pkg
 
 GO=go
 GOFMT=gofmt
