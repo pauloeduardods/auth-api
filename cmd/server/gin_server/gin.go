@@ -6,28 +6,25 @@ import (
 	"monitoring-system/server/cmd/server/gin_server/middleware"
 	"monitoring-system/server/cmd/server/gin_server/routes"
 	"monitoring-system/server/pkg/logger"
-	"monitoring-system/server/pkg/validator"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Gin struct {
-	log       logger.Logger
-	Gin       *gin.Engine
-	validator validator.Validator
-	ctx       context.Context
-	factory   *factory.Factory
+	log     logger.Logger
+	Gin     *gin.Engine
+	ctx     context.Context
+	factory *factory.Factory
 }
 
-func New(ctx context.Context, logger logger.Logger, factory *factory.Factory, validator validator.Validator) *Gin {
+func New(ctx context.Context, logger logger.Logger, factory *factory.Factory) *Gin {
 	gin := gin.Default()
 	return &Gin{
-		log:       logger,
-		Gin:       gin,
-		validator: validator,
-		ctx:       ctx,
-		factory:   factory,
+		log:     logger,
+		Gin:     gin,
+		ctx:     ctx,
+		factory: factory,
 	}
 }
 
@@ -54,6 +51,6 @@ func (s *Gin) SetupApi() error {
 	s.Gin.StaticFS("/web", http.Dir("static"))
 
 	//Routes
-	routes.NewRoutes(apiRoutes, s.factory, s.validator, authMiddleware).ConfigRoutes()
+	routes.NewRoutes(apiRoutes, s.factory, authMiddleware).ConfigRoutes()
 	return nil
 }

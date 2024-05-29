@@ -6,7 +6,6 @@ import (
 	"monitoring-system/server/cmd/server/gin_server"
 	"monitoring-system/server/config"
 	"monitoring-system/server/pkg/logger"
-	"monitoring-system/server/pkg/validator"
 	"net/http"
 	"strconv"
 
@@ -18,18 +17,16 @@ type Server struct {
 	config     *config.Config
 	gin_server *gin_server.Gin
 	server     *http.Server
-	validator  validator.Validator
 	ctx        context.Context
 }
 
 func New(ctx context.Context, awsConfig *aws.Config, config *config.Config, logger logger.Logger, factory *factory.Factory) *Server {
-	gin := gin_server.New(ctx, logger, factory, validator.NewValidatorImpl())
+	gin := gin_server.New(ctx, logger, factory)
 
 	return &Server{
 		config:     config,
 		gin_server: gin,
 		log:        logger,
-		validator:  validator.NewValidatorImpl(),
 		ctx:        ctx,
 	}
 }

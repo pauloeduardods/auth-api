@@ -9,7 +9,7 @@ type AuthRoutes struct {
 }
 
 func (r *routes) configAuthRoutes() {
-	handler := handlers.NewAuthHandler(r.factory.Domain.Auth, r.validator)
+	handler := handlers.NewAuthHandler(r.factory.Domain.Auth)
 	authGroup := r.gin.Group("/auth")
 	authGroup.POST("/login", handler.Login())
 	authGroup.POST("/refresh", handler.RefreshToken())
