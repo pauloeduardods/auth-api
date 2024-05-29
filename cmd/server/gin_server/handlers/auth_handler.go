@@ -1,269 +1,270 @@
 package handlers
 
 import (
-	"monitoring-system/server/domain/auth"
-	"monitoring-system/server/pkg/validator"
+	"io"
+	domainAuth "monitoring-system/server/domain/auth"
+	"monitoring-system/server/pkg/app_error"
+	usecaseAuth "monitoring-system/server/usecases/auth"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-type authHandler struct {
-	auth      auth.Auth
-	validator validator.Validator
+type AuthHandler struct {
+	useCases *usecaseAuth.UseCases
 }
 
-type AuthHandler interface {
-	Login() gin.HandlerFunc
-	SignUp() gin.HandlerFunc
-	ConfirmSignUp() gin.HandlerFunc
-	GetUser() gin.HandlerFunc
-	RefreshToken() gin.HandlerFunc
-	CreateAdmin() gin.HandlerFunc
-	AddMfa() gin.HandlerFunc
-	VerifyMfa() gin.HandlerFunc
-	RemoveMfa() gin.HandlerFunc
-}
-
-func NewAuthHandler(a auth.Auth, validator validator.Validator) AuthHandler {
-	return &authHandler{
-		auth:      a,
-		validator: validator,
+func NewAuthHandler(useCases *usecaseAuth.UseCases) *AuthHandler {
+	return &AuthHandler{
+		useCases: useCases,
 	}
 }
 
 type loginInput struct {
-	Email    string `json:"email" binding:"required" validate:"email"`
-	Password string `json:"password" binding:"required" validate:"min=8"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
-func (a *authHandler) Login() gin.HandlerFunc {
-	return func(g *gin.Context) {
-		var login loginInput
-		if err := g.ShouldBindJSON(&login); err != nil {
-			g.Error(err)
+func (h *AuthHandler) Login() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var input loginInput
+		if err := c.ShouldBindJSON(&input); err != nil {
+			if err == io.EOF {
+				c.Error(app_error.NewApiError(400, "Invalid request"))
+				return
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		err := a.validator.Validate(&login)
+		output, err := h.useCases.Login.Execute(c.Request.Context(), usecaseAuth.LoginInput{
+			LoginInput: domainAuth.LoginInput{
+				Username: input.Email,
+				Password: input.Password,
+			},
+		})
 		if err != nil {
-			g.Error(err)
+			c.Error(app_error.NewApiError(401, "Unauthorized"))
 			return
 		}
-
-		out, err := a.auth.Login(auth.NewLoginInput(login.Email, login.Password))
-		if err != nil {
-			g.Error(err)
-			return
-		} else {
-			g.JSON(http.StatusOK, out)
-		}
+		c.JSON(http.StatusOK, output)
 	}
 }
 
-type signUpInput struct {
-	Email    string `json:"email" binding:"required" validate:"email"`
-	Password string `json:"password" binding:"required" validate:"min=8"`
-	Name     string `json:"name" binding:"required" validate:"min=3,max=50"`
-}
+// type signUpInput struct {
+// 	Email    string `json:"email" binding:"required" validate:"email"`
+// 	Password string `json:"password" binding:"required" validate:"min=8"`
+// 	Name     string `json:"name" binding:"required" validate:"min=3,max=50"`
+// }
 
-func (a *authHandler) SignUp() gin.HandlerFunc {
-	return func(g *gin.Context) {
-		var signUp signUpInput
+// func (h *AuthHandler) SignUp() gin.HandlerFunc {
+// 	return func(c *gin.Context) {
+// 		var input signUpInput
+// 		if err := c.ShouldBindJSON(&input); err != nil {
+// if err == io.EOF {
+// 			c.Error(app_error.NewApiError(400, "Invalid request"))
+// 			return
+// 		}
+// 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 			return
+// 		}
 
-		if err := g.ShouldBindJSON(&signUp); err != nil {
-			g.Error(err)
-			return
-		}
-
-		err := a.validator.Validate(&signUp)
-		if err != nil {
-			g.Error(err)
-			return
-		}
-
-		out, err := a.auth.SignUp(auth.NewSignUpInput(signUp.Email, signUp.Password, signUp.Name))
-		if err != nil {
-			g.Error(err)
-			return
-		} else {
-			g.JSON(http.StatusOK, out)
-		}
-	}
-}
+// 		output, err := h.useCases.SignUp.Execute(c.Request.Context(), usecaseAuth.SignUpInput{
+// 			SignUpInput: domainAuth.SignUpInput{
+// 				Username: input.Email,
+// 				Password: input.Password,
+// 				Name:     input.Name,
+// 			},
+// 		})
+// 		if err != nil {
+// 			c.Error(app_error.NewApiError(400, "Failed to sign up"))
+// 			return
+// 		}
+// 		c.JSON(http.StatusOK, output)
+// 	}
+// }
 
 type confirmSignUpInput struct {
-	Email string `json:"email" binding:"required" validate:"email"`
-	Code  string `json:"code" binding:"required" validate:"numeric"`
+	Email string `json:"email"`
+	Code  string `json:"code"`
 }
 
-func (a *authHandler) ConfirmSignUp() gin.HandlerFunc {
-	return func(g *gin.Context) {
-		var confirmSignUp confirmSignUpInput
-		if err := g.ShouldBindJSON(&confirmSignUp); err != nil {
-			g.Error(err)
+func (h *AuthHandler) ConfirmSignUp() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var input confirmSignUpInput
+		if err := c.ShouldBindJSON(&input); err != nil {
+			if err == io.EOF {
+				c.Error(app_error.NewApiError(400, "Invalid request"))
+				return
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		err := a.validator.Validate(&confirmSignUp)
+		_, err := h.useCases.ConfirmSignUp.Execute(c.Request.Context(), usecaseAuth.ConfirmSignUpInput{
+			ConfirmSignUpInput: domainAuth.ConfirmSignUpInput{
+				Username: input.Email,
+				Code:     input.Code,
+			},
+		})
 		if err != nil {
-			g.Error(err)
+			c.Error(app_error.NewApiError(400, "Failed to confirm sign up"))
 			return
 		}
-
-		_, err = a.auth.ConfirmSignUp(auth.NewConfirmSignUpInput(confirmSignUp.Email, confirmSignUp.Code))
-		if err != nil {
-			g.Error(err)
-			return
-		} else {
-			g.JSON(http.StatusNoContent, gin.H{})
-		}
+		c.JSON(http.StatusNoContent, gin.H{})
 	}
 }
 
-type getUserInput struct {
-	AccessToken string `form:"accessToken" binding:"required"`
+type getMeInput struct {
+	AccessToken string `form:"accessToken"`
 }
 
-func (a *authHandler) GetUser() gin.HandlerFunc {
-	return func(g *gin.Context) {
-		var getUser getUserInput
-		if err := g.ShouldBindQuery(&getUser); err != nil {
-			g.Error(err)
+func (h *AuthHandler) GetMe() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var input getMeInput
+		if err := c.ShouldBindQuery(&input); err != nil {
+			if err == io.EOF {
+				c.Error(app_error.NewApiError(400, "Invalid request"))
+				return
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		err := a.validator.Validate(&getUser)
+		output, err := h.useCases.GetMe.Execute(c.Request.Context(), usecaseAuth.GetMeInput{
+			GetMeInput: domainAuth.GetMeInput{
+				AccessToken: input.AccessToken,
+			},
+		})
 		if err != nil {
-			g.Error(err)
+			c.Error(app_error.NewApiError(401, "Unauthorized"))
 			return
 		}
-
-		out, err := a.auth.GetUser(auth.NewGetUserInput(getUser.AccessToken))
-		if err != nil {
-			g.Error(err)
-			return
-		} else {
-			g.JSON(http.StatusOK, out)
-		}
+		c.JSON(http.StatusOK, output)
 	}
 }
 
 type refreshTokenInput struct {
-	RefreshToken string `json:"refreshToken" binding:"required"`
+	RefreshToken string `json:"refreshToken"`
 }
 
-func (a *authHandler) RefreshToken() gin.HandlerFunc {
-	return func(g *gin.Context) {
-		var refreshToken refreshTokenInput
-		if err := g.ShouldBindJSON(&refreshToken); err != nil {
-			g.Error(err)
+func (h *AuthHandler) RefreshToken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var input refreshTokenInput
+		if err := c.ShouldBindJSON(&input); err != nil {
+			if err == io.EOF {
+				c.Error(app_error.NewApiError(400, "Invalid request"))
+				return
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		err := a.validator.Validate(&refreshToken)
+		output, err := h.useCases.RefreshToken.Execute(c.Request.Context(), usecaseAuth.RefreshTokenInput{
+			RefreshTokenInput: domainAuth.RefreshTokenInput{
+				RefreshToken: input.RefreshToken,
+			},
+		})
 		if err != nil {
-			g.Error(err)
+			c.Error(app_error.NewApiError(401, "Unauthorized"))
 			return
 		}
-
-		out, err := a.auth.RefreshToken(auth.NewRefreshTokenInput(refreshToken.RefreshToken))
-		if err != nil {
-			g.Error(err)
-			return
-		} else {
-			g.JSON(http.StatusOK, out)
-		}
+		c.JSON(http.StatusOK, output)
 	}
 }
 
-type createAdminInput struct {
-	Email    string `json:"email" binding:"required" validate:"email"`
-	Password string `json:"password" binding:"required" validate:"min=8"`
-	Name     string `json:"name" binding:"required" validate:"min=3,max=50"`
-}
+// type createAdminInput struct {
+// 	Email    string `json:"email" binding:"required" validate:"email"`
+// 	Password string `json:"password" binding:"required" validate:"min=8"`
+// 	Name     string `json:"name" binding:"required" validate:"min=3,max=50"`
+// }
 
-func (a *authHandler) CreateAdmin() gin.HandlerFunc {
-	return func(g *gin.Context) {
-		var createAdmin createAdminInput
+// func (h *AuthHandler) CreateAdmin() gin.HandlerFunc {
+// 	return func(c *gin.Context) {
+// 		var input createAdminInput
+// 		if err := c.ShouldBindJSON(&input); err != nil {
+// if err == io.EOF {
+// 			c.Error(app_error.NewApiError(400, "Invalid request"))
+// 			return
+// 		}
+// 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 			return
+// 		}
 
-		if err := g.ShouldBindJSON(&createAdmin); err != nil {
-			g.Error(err)
-			return
-		}
-
-		err := a.validator.Validate(&createAdmin)
-		if err != nil {
-			g.Error(err)
-			return
-		}
-
-		out, err := a.auth.CreateAdmin(auth.NewCreateAdminInput(createAdmin.Email, createAdmin.Password, createAdmin.Name))
-		if err != nil {
-			g.Error(err)
-			return
-		} else {
-			g.JSON(http.StatusOK, out)
-		}
-	}
-}
+// 		output, err := h.useCases.CreateAdmin.Execute(c.Request.Context(), usecaseAuth.CreateAdminInput{
+// 			CreateAdminInput: domainAuth.CreateAdminInput{
+// 				Username: input.Email,
+// 				Password: input.Password,
+// 				Name:     input.Name,
+// 			},
+// 		})
+// 		if err != nil {
+// 			c.Error(app_error.NewApiError(400, "Failed to create admin"))
+// 			return
+// 		}
+// 		c.JSON(http.StatusOK, output)
+// 	}
+// }
 
 type addMfaInput struct {
-	AccessToken string `json:"accessToken" binding:"required"`
+	AccessToken string `json:"accessToken"`
 }
 
-func (a *authHandler) AddMfa() gin.HandlerFunc {
-	return func(g *gin.Context) {
-		var addMfa addMfaInput
-		if err := g.ShouldBindJSON(&addMfa); err != nil {
-			g.Error(err)
+func (h *AuthHandler) AddMfa() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var input addMfaInput
+		if err := c.ShouldBindJSON(&input); err != nil {
+			if err == io.EOF {
+				c.Error(app_error.NewApiError(400, "Invalid request"))
+				return
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		err := a.validator.Validate(&addMfa)
+		output, err := h.useCases.AddMFA.Execute(c.Request.Context(), usecaseAuth.AddMFAInput{
+			AddMFAInput: domainAuth.AddMFAInput{
+				AccessToken: input.AccessToken,
+			},
+		})
 		if err != nil {
-			g.Error(err)
+			c.Error(app_error.NewApiError(400, "Failed to add MFA"))
 			return
 		}
-
-		out, err := a.auth.AddMFA(auth.NewAddMFAInput(addMfa.AccessToken))
-		if err != nil {
-			g.Error(err)
-			return
-		} else {
-			g.JSON(http.StatusOK, out)
-		}
+		c.JSON(http.StatusOK, output)
 	}
 }
 
 type verifyMfaInput struct {
-	Email string `json:"email" binding:"required" validate:"email"`
-	Code  string `json:"code" binding:"required" validate:"numeric"`
-	// AccessToken string `json:"accessToken,omitempty"`
-	Session string `json:"session,omitempty"`
+	Email   string `json:"email"`
+	Code    string `json:"code"`
+	Session string `json:"session"`
 }
 
-func (a *authHandler) VerifyMfa() gin.HandlerFunc {
-	return func(g *gin.Context) {
-		var verifyMfa verifyMfaInput
-		if err := g.ShouldBindJSON(&verifyMfa); err != nil {
-			g.Error(err)
+func (h *AuthHandler) VerifyMfa() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var input verifyMfaInput
+		if err := c.ShouldBindJSON(&input); err != nil {
+			if err == io.EOF {
+				c.Error(app_error.NewApiError(400, "Invalid request"))
+				return
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		err := a.validator.Validate(&verifyMfa)
+		output, err := h.useCases.VerifyMFA.Execute(c.Request.Context(), usecaseAuth.VerifyMFAInput{
+			VerifyMFAInput: domainAuth.VerifyMFAInput{
+				Code:     input.Code,
+				Username: input.Email,
+				Session:  input.Session,
+			},
+		})
 		if err != nil {
-			g.Error(err)
+			c.Error(app_error.NewApiError(401, "Unauthorized"))
 			return
 		}
-
-		out, err := a.auth.VerifyMFA(auth.NewVerifyMFAInput(verifyMfa.Code, verifyMfa.Email, verifyMfa.Session))
-		if err != nil {
-			g.Error(err)
-			return
-		} else {
-			g.JSON(http.StatusOK, out)
-		}
+		c.JSON(http.StatusOK, output)
 	}
 }
 
@@ -271,26 +272,27 @@ type removeMfaInput struct {
 	Username string `json:"username" binding:"required"`
 }
 
-func (a *authHandler) RemoveMfa() gin.HandlerFunc {
-	return func(g *gin.Context) {
-		var removeMfa removeMfaInput
-		if err := g.ShouldBindJSON(&removeMfa); err != nil {
-			g.Error(err)
+func (h *AuthHandler) RemoveMfa() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var input removeMfaInput
+		if err := c.ShouldBindJSON(&input); err != nil {
+			if err == io.EOF {
+				c.Error(app_error.NewApiError(400, "Invalid request"))
+				return
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		err := a.validator.Validate(&removeMfa)
+		err := h.useCases.RemoveMFA.Execute(c.Request.Context(), usecaseAuth.RemoveMFAInput{
+			RemoveMFAInput: domainAuth.RemoveMFAInput{
+				Username: input.Username,
+			},
+		})
 		if err != nil {
-			g.Error(err)
+			c.Error(app_error.NewApiError(400, "Failed to remove MFA"))
 			return
 		}
-
-		err = a.auth.RemoveMFA(auth.NewRemoveMFAInput(removeMfa.Username))
-		if err != nil {
-			g.Error(err)
-			return
-		} else {
-			g.JSON(http.StatusNoContent, gin.H{})
-		}
+		c.JSON(http.StatusNoContent, gin.H{})
 	}
 }

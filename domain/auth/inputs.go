@@ -70,15 +70,15 @@ func NewConfirmSignUpInput(username, code string) (ConfirmSignUpInput, error) {
 	}, nil
 }
 
-type GetUserInput struct {
+type GetMeInput struct {
 	AccessToken string
 }
 
-func NewGetUserInput(accessToken string) (GetUserInput, error) {
+func NewGetMeInput(accessToken string) (GetMeInput, error) {
 	if len(accessToken) == 0 {
-		return GetUserInput{}, app_error.NewApiError(http.StatusBadRequest, "Access token is required", fmt.Sprintf("Field: %s", "AccessToken"))
+		return GetMeInput{}, app_error.NewApiError(http.StatusBadRequest, "Access token is required", fmt.Sprintf("Field: %s", "AccessToken"))
 	}
-	return GetUserInput{
+	return GetMeInput{
 		AccessToken: accessToken,
 	}, nil
 }
@@ -184,6 +184,9 @@ func NewVerifyMFAInput(code, username, session string) (VerifyMFAInput, error) {
 	lowerCaseUsername := strings.ToLower(username)
 	if err := validator.ValidateEmail(lowerCaseUsername); err != nil {
 		return VerifyMFAInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Username"))
+	}
+	if len(session) == 0 {
+		return VerifyMFAInput{}, app_error.NewApiError(http.StatusBadRequest, "Session is required", fmt.Sprintf("Field: %s", "Session"))
 	}
 	return VerifyMFAInput{
 		Code:     code,

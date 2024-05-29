@@ -1,5 +1,7 @@
 package auth
 
+import "context"
+
 type UserGroup string
 
 const (
@@ -8,33 +10,33 @@ const (
 )
 
 type Auth interface {
-	Login(LoginInput) (*LoginOutput, error)
-	SignUp(SignUpInput) (*SignUpOutput, error)
-	ConfirmSignUp(ConfirmSignUpInput) (*ConfirmSignUpOutput, error)
-	GetUser(GetUserInput) (*GetUserOutput, error)
-	ValidateToken(token string) (*Claims, error)
-	AddGroup(AddGroupInput) error
-	RemoveGroup(RemoveGroupInput) error
-	RefreshToken(RefreshTokenInput) (*RefreshTokenOutput, error)
-	CreateAdmin(CreateAdminInput) (*CreateAdminOutput, error)
-	AddMFA(AddMFAInput) (*AddMFAOutput, error)
-	VerifyMFA(VerifyMFAInput) (*LoginOutput, error)
-	RemoveMFA(RemoveMFAInput) error
+	Login(ctx context.Context, input LoginInput) (*LoginOutput, error)
+	SignUp(ctx context.Context, input SignUpInput) (*SignUpOutput, error)
+	ConfirmSignUp(ctx context.Context, input ConfirmSignUpInput) (*ConfirmSignUpOutput, error)
+	GetMe(ctx context.Context, input GetMeInput) (*GetMeOutput, error)
+	ValidateToken(ctx context.Context, token string) (*Claims, error)
+	AddGroup(ctx context.Context, input AddGroupInput) error
+	RemoveGroup(ctx context.Context, input RemoveGroupInput) error
+	RefreshToken(ctx context.Context, input RefreshTokenInput) (*RefreshTokenOutput, error)
+	CreateAdmin(ctx context.Context, input CreateAdminInput) (*CreateAdminOutput, error)
+	AddMFA(ctx context.Context, input AddMFAInput) (*AddMFAOutput, error)
+	VerifyMFA(ctx context.Context, input VerifyMFAInput) (*LoginOutput, error)
+	RemoveMFA(ctx context.Context, input RemoveMFAInput) error
 }
 
 type AuthClient interface {
-	Login(LoginInput) (*LoginOutput, error)
-	SignUp(SignUpInput) (*SignUpOutput, error)
-	ConfirmSignUp(ConfirmSignUpInput) (*ConfirmSignUpOutput, error)
-	GetUser(GetUserInput) (*GetUserOutput, error)
-	ValidateToken(token string) (*Claims, error)
-	AddGroup(AddGroupInput) error
-	RemoveGroup(RemoveGroupInput) error
-	RefreshToken(RefreshTokenInput) (*RefreshTokenOutput, error)
-	CreateAdmin(CreateAdminInput) (*CreateAdminOutput, error)
-	AddMFA(AddMFAInput) (*AddMFAOutput, error)
-	VerifyMFA(VerifyMFAInput) (*LoginOutput, error)
-	RemoveMFA(RemoveMFAInput) error
+	Login(ctx context.Context, input LoginInput) (*LoginOutput, error)
+	SignUp(ctx context.Context, input SignUpInput) (*SignUpOutput, error)
+	ConfirmSignUp(ctx context.Context, input ConfirmSignUpInput) (*ConfirmSignUpOutput, error)
+	GetMe(ctx context.Context, input GetMeInput) (*GetMeOutput, error)
+	ValidateToken(ctx context.Context, token string) (*Claims, error)
+	AddGroup(ctx context.Context, input AddGroupInput) error
+	RemoveGroup(ctx context.Context, input RemoveGroupInput) error
+	RefreshToken(ctx context.Context, input RefreshTokenInput) (*RefreshTokenOutput, error)
+	CreateAdmin(ctx context.Context, input CreateAdminInput) (*CreateAdminOutput, error)
+	AddMFA(ctx context.Context, input AddMFAInput) (*AddMFAOutput, error)
+	VerifyMFA(ctx context.Context, input VerifyMFAInput) (*LoginOutput, error)
+	RemoveMFA(ctx context.Context, input RemoveMFAInput) error
 }
 
 type Claims struct {

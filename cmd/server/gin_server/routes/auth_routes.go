@@ -5,11 +5,8 @@ import (
 	"monitoring-system/server/domain/auth"
 )
 
-type AuthRoutes struct {
-}
-
 func (r *routes) configAuthRoutes() {
-	handler := handlers.NewAuthHandler(r.factory.Domain.Auth)
+	handler := handlers.NewAuthHandler(r.factory.UseCases.Auth)
 	authGroup := r.gin.Group("/auth")
 	authGroup.POST("/login", handler.Login())
 	authGroup.POST("/refresh", handler.RefreshToken())
@@ -22,13 +19,13 @@ func (r *routes) configAuthRoutes() {
 
 	authenticatedGroup := authGroup.Group("/")
 	authenticatedGroup.Use(r.authMiddleware.AuthMiddleware(auth.Admin, auth.User))
-	authenticatedGroup.GET("/", handler.GetUser())
+	authenticatedGroup.GET("/", handler.GetMe())
 
-	userGroup := authGroup.Group("/user")
-	userGroup.POST("/register", handler.SignUp())
+	// userGroup := authGroup.Group("/user")
+	// userGroup.POST("/register", handler.SignUp())
 
-	adminGroup := authGroup.Group("/admin")
-	adminGroup.Use(r.authMiddleware.AuthMiddleware(auth.Admin))
-	adminGroup.POST("/register", handler.CreateAdmin())
+	// adminGroup := authGroup.Group("/admin")
+	// adminGroup.Use(r.authMiddleware.AuthMiddleware(auth.Admin))
+	// adminGroup.POST("/register", handler.CreateAdmin())
 
 }

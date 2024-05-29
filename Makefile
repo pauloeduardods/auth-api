@@ -13,8 +13,6 @@ CONFIG_FILE=config/config.go
 
 PKGS=$(shell $(GO) list ./... | grep -v /vendor/)
 
-include .env
-
 all: build
 
 build: fmt vet

@@ -1,4 +1,4 @@
-package auth_client
+package client
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"monitoring-system/server/pkg/jwt_verify"
 	"monitoring-system/server/pkg/logger"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	cognito "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -17,28 +18,29 @@ type cognitoClient struct {
 	client     *cognito.Client
 	clientId   string
 	userPoolId string
-	ctx        context.Context
 	jwtVerify  jwt_verify.JWTVerify
 	logger     logger.Logger
 }
 
-func NewAuthClient(ctx context.Context, cognito *cognito.Client, clientId string, jwtVerify jwt_verify.JWTVerify, userPoolId string, logger logger.Logger) auth.AuthClient {
+func NewAuthClient(cognito *cognito.Client, clientId string, jwtVerify jwt_verify.JWTVerify, userPoolId string, logger logger.Logger) auth.AuthClient {
 	return &cognitoClient{
 		client:     cognito,
 		clientId:   clientId,
-		ctx:        ctx,
 		jwtVerify:  jwtVerify,
 		userPoolId: userPoolId,
 		logger:     logger,
 	}
 }
 
-func (c *cognitoClient) AddMFA(input auth.AddMFAInput) (*auth.AddMFAOutput, error) {
+func (c *cognitoClient) AddMFA(ctx context.Context, input auth.AddMFAInput) (*auth.AddMFAOutput, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	associateSoftwareTokenInput := &cognito.AssociateSoftwareTokenInput{
 		AccessToken: aws.String(input.AccessToken),
 	}
 
-	associateSoftwareTokenOutput, err := c.client.AssociateSoftwareToken(c.ctx, associateSoftwareTokenInput)
+	associateSoftwareTokenOutput, err := c.client.AssociateSoftwareToken(ctx, associateSoftwareTokenInput)
 	if err != nil {
 		c.logger.Error("Cognito associate software token error", err)
 		return nil, app_error.NewApiError(500, "Failed to associate software token")
@@ -49,7 +51,7 @@ func (c *cognitoClient) AddMFA(input auth.AddMFAInput) (*auth.AddMFAOutput, erro
 	}, nil
 }
 
-func (c *cognitoClient) VerifyMFA(input auth.VerifyMFAInput) (*auth.LoginOutput, error) {
+func (c *cognitoClient) VerifyMFA(ctx context.Context, input auth.VerifyMFAInput) (*auth.LoginOutput, error) {
 	// verifySoftwareTokenInput := &cognito.VerifySoftwareTokenInput{
 	// 	UserCode:    aws.String(input.Code),
 	// 	AccessToken: aws.String(input.AccessToken),
@@ -65,7 +67,6 @@ func (c *cognitoClient) VerifyMFA(input auth.VerifyMFAInput) (*auth.LoginOutput,
 	// if verifySoftwareTokenOutput.Status != "SUCCESS" {
 	// 	return nil, app_error.NewApiError(400, "Invalid MFA code")
 	// }
-
 	respondToAuthChallengeInput := &cognito.RespondToAuthChallengeInput{
 		ChallengeName: "SOFTWARE_TOKEN_MFA",
 		ClientId:      aws.String(c.clientId),
@@ -76,7 +77,7 @@ func (c *cognitoClient) VerifyMFA(input auth.VerifyMFAInput) (*auth.LoginOutput,
 		},
 	}
 
-	cognitoOut, err := c.client.RespondToAuthChallenge(c.ctx, respondToAuthChallengeInput)
+	cognitoOut, err := c.client.RespondToAuthChallenge(ctx, respondToAuthChallengeInput)
 	if err != nil {
 		c.logger.Error("Cognito respond to auth challenge error", err)
 		return nil, app_error.NewApiError(400, "Failed to respond to auth challenge")
@@ -89,7 +90,10 @@ func (c *cognitoClient) VerifyMFA(input auth.VerifyMFAInput) (*auth.LoginOutput,
 	}, nil
 }
 
-func (c *cognitoClient) RemoveMFA(input auth.RemoveMFAInput) error {
+func (c *cognitoClient) RemoveMFA(ctx context.Context, input auth.RemoveMFAInput) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	adminSetUserMFAPreferenceInput := &cognito.AdminSetUserMFAPreferenceInput{
 		UserPoolId: aws.String(c.userPoolId),
 		Username:   aws.String(input.Username),
@@ -99,7 +103,7 @@ func (c *cognitoClient) RemoveMFA(input auth.RemoveMFAInput) error {
 		},
 	}
 
-	_, err := c.client.AdminSetUserMFAPreference(c.ctx, adminSetUserMFAPreferenceInput)
+	_, err := c.client.AdminSetUserMFAPreference(ctx, adminSetUserMFAPreferenceInput)
 	if err != nil {
 		c.logger.Error("Cognito remove MFA error", err)
 		return app_error.NewApiError(500, "Failed to remove MFA")
@@ -108,7 +112,10 @@ func (c *cognitoClient) RemoveMFA(input auth.RemoveMFAInput) error {
 	return nil
 }
 
-func (c *cognitoClient) Login(input auth.LoginInput) (*auth.LoginOutput, error) {
+func (c *cognitoClient) Login(ctx context.Context, input auth.LoginInput) (*auth.LoginOutput, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	initiateAuthInput := &cognito.InitiateAuthInput{
 		AuthFlow: "USER_PASSWORD_AUTH",
 		AuthParameters: map[string]string{
@@ -117,7 +124,7 @@ func (c *cognitoClient) Login(input auth.LoginInput) (*auth.LoginOutput, error) 
 		},
 		ClientId: aws.String(c.clientId),
 	}
-	cognitoOut, err := c.client.InitiateAuth(c.ctx, initiateAuthInput)
+	cognitoOut, err := c.client.InitiateAuth(ctx, initiateAuthInput)
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "NotAuthorizedException") {
@@ -148,7 +155,10 @@ func (c *cognitoClient) Login(input auth.LoginInput) (*auth.LoginOutput, error) 
 	return out, nil
 }
 
-func (c *cognitoClient) SignUp(input auth.SignUpInput) (*auth.SignUpOutput, error) {
+func (c *cognitoClient) SignUp(ctx context.Context, input auth.SignUpInput) (*auth.SignUpOutput, error) {
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
+
 	signUpInput := &cognito.SignUpInput{
 		ClientId: aws.String(c.clientId),
 		Username: aws.String(input.Username),
@@ -164,7 +174,7 @@ func (c *cognitoClient) SignUp(input auth.SignUpInput) (*auth.SignUpOutput, erro
 			},
 		},
 	}
-	cognitoOut, err := c.client.SignUp(c.ctx, signUpInput)
+	cognitoOut, err := c.client.SignUp(ctx, signUpInput)
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "UsernameExistsException") {
@@ -174,7 +184,7 @@ func (c *cognitoClient) SignUp(input auth.SignUpInput) (*auth.SignUpOutput, erro
 		return nil, err
 	}
 
-	err = c.AddGroup(auth.AddGroupInput{
+	err = c.AddGroup(ctx, auth.AddGroupInput{
 		Username:  input.Username,
 		GroupName: auth.User,
 	})
@@ -188,14 +198,17 @@ func (c *cognitoClient) SignUp(input auth.SignUpInput) (*auth.SignUpOutput, erro
 	return out, nil
 }
 
-func (c *cognitoClient) ConfirmSignUp(input auth.ConfirmSignUpInput) (*auth.ConfirmSignUpOutput, error) {
+func (c *cognitoClient) ConfirmSignUp(ctx context.Context, input auth.ConfirmSignUpInput) (*auth.ConfirmSignUpOutput, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	confirmSignUp := &cognito.ConfirmSignUpInput{
 		ClientId:         aws.String(c.clientId),
 		Username:         aws.String(input.Username),
 		ConfirmationCode: aws.String(input.Code),
 	}
 
-	_, err := c.client.ConfirmSignUp(c.ctx, confirmSignUp)
+	_, err := c.client.ConfirmSignUp(ctx, confirmSignUp)
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "CodeMismatchException") {
@@ -211,11 +224,14 @@ func (c *cognitoClient) ConfirmSignUp(input auth.ConfirmSignUpInput) (*auth.Conf
 	return &auth.ConfirmSignUpOutput{}, nil
 }
 
-func (c *cognitoClient) GetUser(input auth.GetUserInput) (*auth.GetUserOutput, error) {
-	getUserInput := &cognito.GetUserInput{
+func (c *cognitoClient) GetMe(ctx context.Context, input auth.GetMeInput) (*auth.GetMeOutput, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	getMeInput := &cognito.GetUserInput{
 		AccessToken: &input.AccessToken,
 	}
-	cognitoOut, err := c.client.GetUser(c.ctx, getUserInput)
+	cognitoOut, err := c.client.GetUser(ctx, getMeInput)
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "NotAuthorizedException") {
@@ -228,7 +244,7 @@ func (c *cognitoClient) GetUser(input auth.GetUserInput) (*auth.GetUserOutput, e
 		return nil, err
 	}
 
-	out := &auth.GetUserOutput{
+	out := &auth.GetMeOutput{
 		Username: *cognitoOut.Username,
 		Name:     *cognitoOut.UserAttributes[0].Value, //TODO: handle this better
 	}
@@ -236,7 +252,7 @@ func (c *cognitoClient) GetUser(input auth.GetUserInput) (*auth.GetUserOutput, e
 	return out, nil
 }
 
-func (c *cognitoClient) ValidateToken(token string) (*auth.Claims, error) {
+func (c *cognitoClient) ValidateToken(ctx context.Context, token string) (*auth.Claims, error) {
 	_, claims, err := c.jwtVerify.ParseJWT(token)
 	if err != nil {
 		return nil, err
@@ -249,14 +265,17 @@ func (c *cognitoClient) ValidateToken(token string) (*auth.Claims, error) {
 	}, nil
 }
 
-func (c *cognitoClient) AddGroup(input auth.AddGroupInput) error {
+func (c *cognitoClient) AddGroup(ctx context.Context, input auth.AddGroupInput) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	addUserToGroupInput := &cognito.AdminAddUserToGroupInput{
 		UserPoolId: aws.String(c.userPoolId),
 		Username:   aws.String(input.Username),
 		GroupName:  aws.String(string(input.GroupName)),
 	}
 
-	_, err := c.client.AdminAddUserToGroup(c.ctx, addUserToGroupInput)
+	_, err := c.client.AdminAddUserToGroup(ctx, addUserToGroupInput)
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "UserNotFoundException") {
@@ -272,14 +291,17 @@ func (c *cognitoClient) AddGroup(input auth.AddGroupInput) error {
 	return nil
 }
 
-func (c *cognitoClient) RemoveGroup(input auth.RemoveGroupInput) error {
+func (c *cognitoClient) RemoveGroup(ctx context.Context, input auth.RemoveGroupInput) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	removeUserFromGroupInput := &cognito.AdminRemoveUserFromGroupInput{
 		UserPoolId: aws.String(c.userPoolId),
 		Username:   aws.String(input.Username),
 		GroupName:  aws.String(string(input.GroupName)),
 	}
 
-	_, err := c.client.AdminRemoveUserFromGroup(c.ctx, removeUserFromGroupInput)
+	_, err := c.client.AdminRemoveUserFromGroup(ctx, removeUserFromGroupInput)
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "UserNotFoundException") {
@@ -295,7 +317,10 @@ func (c *cognitoClient) RemoveGroup(input auth.RemoveGroupInput) error {
 	return nil
 }
 
-func (c *cognitoClient) RefreshToken(input auth.RefreshTokenInput) (*auth.RefreshTokenOutput, error) {
+func (c *cognitoClient) RefreshToken(ctx context.Context, input auth.RefreshTokenInput) (*auth.RefreshTokenOutput, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	refreshTokenInput := &cognito.InitiateAuthInput{
 		AuthFlow: "REFRESH_TOKEN_AUTH",
 		AuthParameters: map[string]string{
@@ -303,7 +328,7 @@ func (c *cognitoClient) RefreshToken(input auth.RefreshTokenInput) (*auth.Refres
 		},
 		ClientId: aws.String(c.clientId),
 	}
-	cognitoOut, err := c.client.InitiateAuth(c.ctx, refreshTokenInput)
+	cognitoOut, err := c.client.InitiateAuth(ctx, refreshTokenInput)
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "NotAuthorizedException") {
@@ -321,7 +346,10 @@ func (c *cognitoClient) RefreshToken(input auth.RefreshTokenInput) (*auth.Refres
 	return out, nil
 }
 
-func (c *cognitoClient) CreateAdmin(input auth.CreateAdminInput) (*auth.CreateAdminOutput, error) {
+func (c *cognitoClient) CreateAdmin(ctx context.Context, input auth.CreateAdminInput) (*auth.CreateAdminOutput, error) {
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
+
 	createUserInput := &cognito.AdminCreateUserInput{
 		UserPoolId: aws.String(c.userPoolId),
 		Username:   aws.String(input.Username),
@@ -342,7 +370,7 @@ func (c *cognitoClient) CreateAdmin(input auth.CreateAdminInput) (*auth.CreateAd
 		ForceAliasCreation: true,
 	}
 
-	_, err := c.client.AdminCreateUser(c.ctx, createUserInput)
+	_, err := c.client.AdminCreateUser(ctx, createUserInput)
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "UsernameExistsException") {
@@ -352,7 +380,7 @@ func (c *cognitoClient) CreateAdmin(input auth.CreateAdminInput) (*auth.CreateAd
 		return nil, err
 	}
 
-	err = c.AddGroup(auth.AddGroupInput{
+	err = c.AddGroup(ctx, auth.AddGroupInput{
 		Username:  input.Username,
 		GroupName: auth.Admin,
 	})

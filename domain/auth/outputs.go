@@ -19,7 +19,7 @@ type RefreshTokenOutput struct {
 	IdToken     string `json:"idToken"`
 }
 
-type GetUserOutput struct {
+type GetMeOutput struct {
 	Username string `json:"username"`
 	Name     string `json:"name"`
 }

@@ -32,7 +32,7 @@ func (a *AuthMiddlewareImpl) AuthMiddleware(groupNames ...auth.UserGroup) gin.Ha
 
 		token := authHeader[7:] // remove Bearer from token
 
-		claims, err := a.auth.ValidateToken(token)
+		claims, err := a.auth.ValidateToken(c.Request.Context(), token)
 		if err != nil {
 			c.Error(app_error.NewApiError(401, "Unauthorized"))
 			c.Abort()
