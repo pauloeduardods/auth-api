@@ -4,7 +4,7 @@ import (
 	"context"
 	"monitoring-system/server/config"
 	"monitoring-system/server/domain/auth"
-	"monitoring-system/server/internal/auth_cognito"
+	auth_client "monitoring-system/server/internal/auth/client"
 	"monitoring-system/server/pkg/jwt_verify"
 	"monitoring-system/server/pkg/logger"
 
@@ -22,30 +22,29 @@ type Domain struct {
 }
 
 type Internal struct {
-	Auth auth.CognitoAuth
+	AuthClient auth.AuthClient
 }
 
-func newDomainAuth(cognitoAuth auth.CognitoAuth) auth.Auth {
-	return auth.New(cognitoAuth)
+func newDomainAuth(authClient auth.AuthClient) auth.Auth {
+	return auth.NewAuthService(authClient)
 }
 
-func newInternalAuth(ctx context.Context, logger logger.Logger, awsConfig *aws.Config, config config.Config) auth.CognitoAuth {
+func newAuthClient(ctx context.Context, logger logger.Logger, awsConfig *aws.Config, config config.Config) auth.AuthClient {
 	cognitoClient := cognitoidentityprovider.NewFromConfig(*awsConfig)
 	jwtVerify := jwt_verify.NewAuth(config.Aws.Region, config.Aws.CognitoUserPoolID, logger)
 	jwtVerify.CacheJWK() //TODO: Check when we need to cache the JWK and how to handle the error
-	return auth_cognito.NewCognitoAuth(ctx, cognitoClient, config.Aws.CognitoClientId, jwtVerify, config.Aws.CognitoUserPoolID, logger)
+	return auth_client.NewAuthClient(ctx, cognitoClient, config.Aws.CognitoClientId, jwtVerify, config.Aws.CognitoUserPoolID, logger)
 }
-
 func New(ctx context.Context, logger logger.Logger, awsConfig aws.Config, config config.Config) (*Factory, error) {
-	internalAuth := newInternalAuth(ctx, logger, &awsConfig, config)
-	domainAuth := newDomainAuth(internalAuth)
+	authClient := newAuthClient(ctx, logger, &awsConfig, config)
+	domainAuth := newDomainAuth(authClient)
 
 	return &Factory{
 		Domain: Domain{
 			Auth: domainAuth,
 		},
 		internal: Internal{
-			Auth: internalAuth,
+			AuthClient: authClient,
 		},
 	}, nil
 }

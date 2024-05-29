@@ -1,10 +1,10 @@
 package auth
 
 type auth struct {
-	cognitoAuth CognitoAuth
+	cognitoAuth AuthClient
 }
 
-func New(cognitoAuth CognitoAuth) Auth {
+func NewAuthService(cognitoAuth AuthClient) Auth {
 	return &auth{
 		cognitoAuth: cognitoAuth,
 	}

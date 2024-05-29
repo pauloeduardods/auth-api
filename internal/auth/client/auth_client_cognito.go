@@ -1,4 +1,4 @@
-package auth_cognito
+package auth_client
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 )
 
-type cognitoAuth struct {
+type cognitoClient struct {
 	client     *cognito.Client
 	clientId   string
 	userPoolId string
@@ -22,8 +22,8 @@ type cognitoAuth struct {
 	logger     logger.Logger
 }
 
-func NewCognitoAuth(ctx context.Context, cognito *cognito.Client, clientId string, jwtVerify jwt_verify.JWTVerify, userPoolId string, logger logger.Logger) auth.CognitoAuth {
-	return &cognitoAuth{
+func NewAuthClient(ctx context.Context, cognito *cognito.Client, clientId string, jwtVerify jwt_verify.JWTVerify, userPoolId string, logger logger.Logger) auth.AuthClient {
+	return &cognitoClient{
 		client:     cognito,
 		clientId:   clientId,
 		ctx:        ctx,
@@ -33,7 +33,7 @@ func NewCognitoAuth(ctx context.Context, cognito *cognito.Client, clientId strin
 	}
 }
 
-func (c *cognitoAuth) AddMFA(input auth.AddMFAInput) (*auth.AddMFAOutput, error) {
+func (c *cognitoClient) AddMFA(input auth.AddMFAInput) (*auth.AddMFAOutput, error) {
 	associateSoftwareTokenInput := &cognito.AssociateSoftwareTokenInput{
 		AccessToken: aws.String(input.AccessToken),
 	}
@@ -49,7 +49,7 @@ func (c *cognitoAuth) AddMFA(input auth.AddMFAInput) (*auth.AddMFAOutput, error)
 	}, nil
 }
 
-func (c *cognitoAuth) VerifyMFA(input auth.VerifyMFAInput) (*auth.LoginOutput, error) {
+func (c *cognitoClient) VerifyMFA(input auth.VerifyMFAInput) (*auth.LoginOutput, error) {
 	// verifySoftwareTokenInput := &cognito.VerifySoftwareTokenInput{
 	// 	UserCode:    aws.String(input.Code),
 	// 	AccessToken: aws.String(input.AccessToken),
@@ -89,7 +89,7 @@ func (c *cognitoAuth) VerifyMFA(input auth.VerifyMFAInput) (*auth.LoginOutput, e
 	}, nil
 }
 
-func (c *cognitoAuth) RemoveMFA(input auth.RemoveMFAInput) error {
+func (c *cognitoClient) RemoveMFA(input auth.RemoveMFAInput) error {
 	adminSetUserMFAPreferenceInput := &cognito.AdminSetUserMFAPreferenceInput{
 		UserPoolId: aws.String(c.userPoolId),
 		Username:   aws.String(input.Username),
@@ -108,7 +108,7 @@ func (c *cognitoAuth) RemoveMFA(input auth.RemoveMFAInput) error {
 	return nil
 }
 
-func (c *cognitoAuth) Login(input auth.LoginInput) (*auth.LoginOutput, error) {
+func (c *cognitoClient) Login(input auth.LoginInput) (*auth.LoginOutput, error) {
 	initiateAuthInput := &cognito.InitiateAuthInput{
 		AuthFlow: "USER_PASSWORD_AUTH",
 		AuthParameters: map[string]string{
@@ -148,7 +148,7 @@ func (c *cognitoAuth) Login(input auth.LoginInput) (*auth.LoginOutput, error) {
 	return out, nil
 }
 
-func (c *cognitoAuth) SignUp(input auth.SignUpInput) (*auth.SignUpOutput, error) {
+func (c *cognitoClient) SignUp(input auth.SignUpInput) (*auth.SignUpOutput, error) {
 	signUpInput := &cognito.SignUpInput{
 		ClientId: aws.String(c.clientId),
 		Username: aws.String(input.Username),
@@ -188,7 +188,7 @@ func (c *cognitoAuth) SignUp(input auth.SignUpInput) (*auth.SignUpOutput, error)
 	return out, nil
 }
 
-func (c *cognitoAuth) ConfirmSignUp(input auth.ConfirmSignUpInput) (*auth.ConfirmSignUpOutput, error) {
+func (c *cognitoClient) ConfirmSignUp(input auth.ConfirmSignUpInput) (*auth.ConfirmSignUpOutput, error) {
 	confirmSignUp := &cognito.ConfirmSignUpInput{
 		ClientId:         aws.String(c.clientId),
 		Username:         aws.String(input.Username),
@@ -211,7 +211,7 @@ func (c *cognitoAuth) ConfirmSignUp(input auth.ConfirmSignUpInput) (*auth.Confir
 	return &auth.ConfirmSignUpOutput{}, nil
 }
 
-func (c *cognitoAuth) GetUser(input auth.GetUserInput) (*auth.GetUserOutput, error) {
+func (c *cognitoClient) GetUser(input auth.GetUserInput) (*auth.GetUserOutput, error) {
 	getUserInput := &cognito.GetUserInput{
 		AccessToken: &input.AccessToken,
 	}
@@ -236,7 +236,7 @@ func (c *cognitoAuth) GetUser(input auth.GetUserInput) (*auth.GetUserOutput, err
 	return out, nil
 }
 
-func (c *cognitoAuth) ValidateToken(token string) (*auth.Claims, error) {
+func (c *cognitoClient) ValidateToken(token string) (*auth.Claims, error) {
 	_, claims, err := c.jwtVerify.ParseJWT(token)
 	if err != nil {
 		return nil, err
@@ -249,7 +249,7 @@ func (c *cognitoAuth) ValidateToken(token string) (*auth.Claims, error) {
 	}, nil
 }
 
-func (c *cognitoAuth) AddGroup(input auth.AddGroupInput) error {
+func (c *cognitoClient) AddGroup(input auth.AddGroupInput) error {
 	addUserToGroupInput := &cognito.AdminAddUserToGroupInput{
 		UserPoolId: aws.String(c.userPoolId),
 		Username:   aws.String(input.Username),
@@ -272,7 +272,7 @@ func (c *cognitoAuth) AddGroup(input auth.AddGroupInput) error {
 	return nil
 }
 
-func (c *cognitoAuth) RemoveGroup(input auth.RemoveGroupInput) error {
+func (c *cognitoClient) RemoveGroup(input auth.RemoveGroupInput) error {
 	removeUserFromGroupInput := &cognito.AdminRemoveUserFromGroupInput{
 		UserPoolId: aws.String(c.userPoolId),
 		Username:   aws.String(input.Username),
@@ -295,7 +295,7 @@ func (c *cognitoAuth) RemoveGroup(input auth.RemoveGroupInput) error {
 	return nil
 }
 
-func (c *cognitoAuth) RefreshToken(input auth.RefreshTokenInput) (*auth.RefreshTokenOutput, error) {
+func (c *cognitoClient) RefreshToken(input auth.RefreshTokenInput) (*auth.RefreshTokenOutput, error) {
 	refreshTokenInput := &cognito.InitiateAuthInput{
 		AuthFlow: "REFRESH_TOKEN_AUTH",
 		AuthParameters: map[string]string{
@@ -321,7 +321,7 @@ func (c *cognitoAuth) RefreshToken(input auth.RefreshTokenInput) (*auth.RefreshT
 	return out, nil
 }
 
-func (c *cognitoAuth) CreateAdmin(input auth.CreateAdminInput) (*auth.CreateAdminOutput, error) {
+func (c *cognitoClient) CreateAdmin(input auth.CreateAdminInput) (*auth.CreateAdminOutput, error) {
 	createUserInput := &cognito.AdminCreateUserInput{
 		UserPoolId: aws.String(c.userPoolId),
 		Username:   aws.String(input.Username),

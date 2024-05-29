@@ -22,7 +22,7 @@ type Auth interface {
 	RemoveMFA(RemoveMFAInput) error
 }
 
-type CognitoAuth interface {
+type AuthClient interface {
 	Login(LoginInput) (*LoginOutput, error)
 	SignUp(SignUpInput) (*SignUpOutput, error)
 	ConfirmSignUp(ConfirmSignUpInput) (*ConfirmSignUpOutput, error)
