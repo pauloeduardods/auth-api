@@ -1,7 +1,6 @@
 package gin_server
 
 import (
-	"context"
 	"monitoring-system/server/cmd/factory"
 	"monitoring-system/server/cmd/server/gin_server/middleware"
 	"monitoring-system/server/cmd/server/gin_server/routes"
@@ -14,16 +13,14 @@ import (
 type Gin struct {
 	log     logger.Logger
 	Gin     *gin.Engine
-	ctx     context.Context
 	factory *factory.Factory
 }
 
-func New(ctx context.Context, logger logger.Logger, factory *factory.Factory) *Gin {
+func New(logger logger.Logger, factory *factory.Factory) *Gin {
 	gin := gin.Default()
 	return &Gin{
 		log:     logger,
 		Gin:     gin,
-		ctx:     ctx,
 		factory: factory,
 	}
 }

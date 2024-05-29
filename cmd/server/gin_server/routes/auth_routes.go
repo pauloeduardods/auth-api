@@ -2,12 +2,16 @@ package routes
 
 import (
 	"monitoring-system/server/cmd/server/gin_server/handlers"
+	"monitoring-system/server/cmd/server/gin_server/middleware"
 	"monitoring-system/server/domain/auth"
+	"time"
 )
 
 func (r *routes) configAuthRoutes() {
 	handler := handlers.NewAuthHandler(r.factory.UseCases.Auth)
 	authGroup := r.gin.Group("/auth")
+	authGroup.Use(middleware.TimeoutMiddleware(30 * time.Second))
+
 	authGroup.POST("/login", handler.Login())
 	authGroup.POST("/refresh", handler.RefreshToken())
 	authGroup.POST("/confirm", handler.ConfirmSignUp())

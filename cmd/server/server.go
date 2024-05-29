@@ -21,7 +21,7 @@ type Server struct {
 }
 
 func New(ctx context.Context, awsConfig *aws.Config, config *config.Config, logger logger.Logger, factory *factory.Factory) *Server {
-	gin := gin_server.New(ctx, logger, factory)
+	gin := gin_server.New(logger, factory)
 
 	return &Server{
 		config:     config,

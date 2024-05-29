@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"monitoring-system/server/pkg/app_error"
 	"net/http"
 	"time"
 
@@ -14,13 +13,28 @@ func TimeoutMiddleware(timeout time.Duration) gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), timeout)
 		defer cancel()
 
-		c.Request = c.Request.WithContext(ctx)
+		done := make(chan struct{})
 
-		c.Next()
+		go func() {
+			c.Request = c.Request.WithContext(ctx)
+			c.Next()
+			done <- struct{}{}
+		}()
 
-		if ctx.Err() == context.DeadlineExceeded {
-			c.Error(app_error.NewApiError(http.StatusRequestTimeout, "Request timeout"))
-			c.Abort()
+		select {
+		case <-done:
+			return
+		case <-ctx.Done():
+			switch ctx.Err() {
+			case context.DeadlineExceeded:
+				c.JSON(http.StatusRequestTimeout, gin.H{"message": "Request timeout"})
+				c.Abort()
+				return
+			default:
+				c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal server error"})
+				c.Abort()
+				return
+			}
 		}
 	}
 }
