@@ -123,8 +123,24 @@ func (h *AuthHandler) VerifyMfa() gin.HandlerFunc {
 	}
 }
 
-type removeMfaInput struct {
+type adminRemoveMfaInput struct {
 	Username string `json:"username"`
+}
+
+func (h *AuthHandler) AdminRemoveMfa() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		processRequestNoOutput(c, adminRemoveMfaInput{}, func(ctx context.Context, input adminRemoveMfaInput) error {
+			return h.useCases.AdminRemoveMFA.Execute(ctx, usecaseAuth.AdminRemoveMFAInput{
+				AdminRemoveMFAInput: domainAuth.AdminRemoveMFAInput{
+					Username: input.Username,
+				},
+			})
+		})
+	}
+}
+
+type removeMfaInput struct {
+	AccessToken string `json:"accessToken"`
 }
 
 func (h *AuthHandler) RemoveMfa() gin.HandlerFunc {
@@ -132,7 +148,7 @@ func (h *AuthHandler) RemoveMfa() gin.HandlerFunc {
 		processRequestNoOutput(c, removeMfaInput{}, func(ctx context.Context, input removeMfaInput) error {
 			return h.useCases.RemoveMFA.Execute(ctx, usecaseAuth.RemoveMFAInput{
 				RemoveMFAInput: domainAuth.RemoveMFAInput{
-					Username: input.Username,
+					AccessToken: input.AccessToken,
 				},
 			})
 		})

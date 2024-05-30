@@ -195,17 +195,30 @@ func NewVerifyMFAInput(code, username, session string) (VerifyMFAInput, error) {
 	}, nil
 }
 
-type RemoveMFAInput struct {
+type AdminRemoveMFAInput struct {
 	Username string
 }
 
-func NewRemoveMFAInput(username string) (RemoveMFAInput, error) {
+func NewAdminRemoveMFAInput(username string) (AdminRemoveMFAInput, error) {
 	lowerCaseUsername := strings.ToLower(username)
 	if err := validator.ValidateEmail(lowerCaseUsername); err != nil {
-		return RemoveMFAInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Username"))
+		return AdminRemoveMFAInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Username"))
+	}
+	return AdminRemoveMFAInput{
+		Username: lowerCaseUsername,
+	}, nil
+}
+
+type RemoveMFAInput struct {
+	AccessToken string
+}
+
+func NewRemoveMFAInput(accessToken string) (RemoveMFAInput, error) {
+	if len(accessToken) == 0 {
+		return RemoveMFAInput{}, app_error.NewApiError(http.StatusBadRequest, "Access token is required", fmt.Sprintf("Field: %s", "AccessToken"))
 	}
 	return RemoveMFAInput{
-		Username: lowerCaseUsername,
+		AccessToken: accessToken,
 	}, nil
 }
 

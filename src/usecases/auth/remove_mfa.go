@@ -20,7 +20,7 @@ func NewRemoveMFAUseCase(auth auth.AuthService) *RemoveMFAUseCase {
 }
 
 func (uc *RemoveMFAUseCase) Execute(ctx context.Context, input RemoveMFAInput) error {
-	removeMFAInput, err := auth.NewRemoveMFAInput(input.Username)
+	removeMFAInput, err := auth.NewRemoveMFAInput(input.AccessToken)
 	if err != nil {
 		return err
 	}

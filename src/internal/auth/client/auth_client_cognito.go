@@ -118,7 +118,7 @@ func (c *cognitoClient) VerifyMFA(ctx context.Context, input auth.VerifyMFAInput
 	}, nil
 }
 
-func (c *cognitoClient) RemoveMFA(ctx context.Context, input auth.RemoveMFAInput) error {
+func (c *cognitoClient) AdminRemoveMFA(ctx context.Context, input auth.AdminRemoveMFAInput) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -132,6 +132,27 @@ func (c *cognitoClient) RemoveMFA(ctx context.Context, input auth.RemoveMFAInput
 	}
 
 	_, err := c.client.AdminSetUserMFAPreference(ctx, adminSetUserMFAPreferenceInput)
+	if err != nil {
+		c.logger.Error("Cognito remove MFA error", err)
+		return app_error.NewApiError(500, "Failed to remove MFA")
+	}
+
+	return nil
+}
+
+func (c *cognitoClient) RemoveMFA(ctx context.Context, input auth.RemoveMFAInput) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	setUserMFAPreferenceInput := &cognito.SetUserMFAPreferenceInput{
+		AccessToken: aws.String(input.AccessToken),
+		SoftwareTokenMfaSettings: &types.SoftwareTokenMfaSettingsType{
+			Enabled:      false,
+			PreferredMfa: false,
+		},
+	}
+
+	_, err := c.client.SetUserMFAPreference(ctx, setUserMFAPreferenceInput)
 	if err != nil {
 		c.logger.Error("Cognito remove MFA error", err)
 		return app_error.NewApiError(500, "Failed to remove MFA")

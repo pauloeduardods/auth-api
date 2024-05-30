@@ -64,6 +64,10 @@ func (a *auth) VerifyMFA(ctx context.Context, input VerifyMFAInput) (*LoginOutpu
 	return a.cognitoAuth.VerifyMFA(ctx, input)
 }
 
+func (a *auth) AdminRemoveMFA(ctx context.Context, input AdminRemoveMFAInput) error {
+	return a.cognitoAuth.AdminRemoveMFA(ctx, input)
+}
+
 func (a *auth) RemoveMFA(ctx context.Context, input RemoveMFAInput) error {
 	return a.cognitoAuth.RemoveMFA(ctx, input)
 }

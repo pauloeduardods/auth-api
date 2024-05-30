@@ -20,7 +20,8 @@ func (r *routes) configAuthRoutes() {
 	mfaGroup := authGroup.Group("/mfa")
 	mfaGroup.POST("/", handler.AddMfa())
 	mfaGroup.POST("/verify", handler.VerifyMfa())
-	mfaGroup.POST("/remove", r.authMiddleware.AuthMiddleware(auth.Admin), handler.RemoveMfa())
+	mfaGroup.POST("/remove", handler.RemoveMfa())
+	mfaGroup.POST("/admin/remove", r.authMiddleware.AuthMiddleware(auth.Admin), handler.AdminRemoveMfa())
 	mfaGroup.POST("/activate", r.authMiddleware.AuthMiddleware(auth.User), handler.ActivateMfa())
 
 	authenticatedGroup := authGroup.Group("/")

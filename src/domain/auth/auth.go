@@ -23,6 +23,7 @@ type AuthService interface {
 	AddMFA(ctx context.Context, input AddMFAInput) (*AddMFAOutput, error)
 	ActivateMFA(ctx context.Context, input ActivateMFAInput) error
 	VerifyMFA(ctx context.Context, input VerifyMFAInput) (*LoginOutput, error)
+	AdminRemoveMFA(ctx context.Context, input AdminRemoveMFAInput) error
 	RemoveMFA(ctx context.Context, input RemoveMFAInput) error
 	Logout(ctx context.Context, input LogoutInput) error
 }
@@ -41,6 +42,7 @@ type AuthClient interface {
 	AddMFA(ctx context.Context, input AddMFAInput) (*AddMFAOutput, error)
 	ActivateMFA(ctx context.Context, input ActivateMFAInput) error
 	VerifyMFA(ctx context.Context, input VerifyMFAInput) (*LoginOutput, error)
+	AdminRemoveMFA(ctx context.Context, input AdminRemoveMFAInput) error
 	RemoveMFA(ctx context.Context, input RemoveMFAInput) error
 	Logout(ctx context.Context, input LogoutInput) error
 }
