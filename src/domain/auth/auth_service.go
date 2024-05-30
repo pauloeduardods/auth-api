@@ -67,3 +67,7 @@ func (a *auth) VerifyMFA(ctx context.Context, input VerifyMFAInput) (*LoginOutpu
 func (a *auth) RemoveMFA(ctx context.Context, input RemoveMFAInput) error {
 	return a.cognitoAuth.RemoveMFA(ctx, input)
 }
+
+func (a *auth) Logout(ctx context.Context, input LogoutInput) error {
+	return a.cognitoAuth.Logout(ctx, input)
+}

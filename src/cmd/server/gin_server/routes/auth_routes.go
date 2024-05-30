@@ -13,6 +13,7 @@ func (r *routes) configAuthRoutes() {
 	authGroup.Use(middleware.TimeoutMiddleware(30 * time.Second))
 
 	authGroup.POST("/login", handler.Login())
+	authGroup.POST("/logout", handler.Logout())
 	authGroup.POST("/refresh", handler.RefreshToken())
 	authGroup.POST("/confirm", handler.ConfirmSignUp())
 

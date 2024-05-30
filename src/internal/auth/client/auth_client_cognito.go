@@ -95,21 +95,6 @@ func (c *cognitoClient) ActivateMFA(ctx context.Context, input auth.ActivateMFAI
 }
 
 func (c *cognitoClient) VerifyMFA(ctx context.Context, input auth.VerifyMFAInput) (*auth.LoginOutput, error) {
-	// verifySoftwareTokenInput := &cognito.VerifySoftwareTokenInput{
-	// 	UserCode:    aws.String(input.Code),
-	// 	AccessToken: aws.String(input.AccessToken),
-	// 	Session:     aws.String(input.Session),
-	// }
-
-	// verifySoftwareTokenOutput, err := c.client.VerifySoftwareToken(c.ctx, verifySoftwareTokenInput)
-	// if err != nil {
-	// 	c.logger.Error("Cognito verify software token error", err)
-	// 	return nil, app_error.NewApiError(400, "Failed to verify software token")
-	// }
-
-	// if verifySoftwareTokenOutput.Status != "SUCCESS" {
-	// 	return nil, app_error.NewApiError(400, "Invalid MFA code")
-	// }
 	respondToAuthChallengeInput := &cognito.RespondToAuthChallengeInput{
 		ChallengeName: "SOFTWARE_TOKEN_MFA",
 		ClientId:      aws.String(c.clientId),
@@ -453,6 +438,27 @@ func (c *cognitoClient) DeleteUser(ctx context.Context, input auth.DeleteUserInp
 			return app_error.NewApiError(404, "User not found")
 		}
 		c.logger.Error("Cognito delete user error", err)
+		return err
+	}
+
+	return nil
+}
+
+func (c *cognitoClient) Logout(ctx context.Context, input auth.LogoutInput) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	globalSignOutInput := &cognito.GlobalSignOutInput{
+		AccessToken: aws.String(input.AccessToken),
+	}
+
+	_, err := c.client.GlobalSignOut(ctx, globalSignOutInput)
+	if err != nil {
+		errorType := err.Error()
+		if strings.Contains(errorType, "NotAuthorizedException") {
+			return app_error.NewApiError(401, "Invalid access token")
+		}
+		c.logger.Error("Cognito logout error", err)
 		return err
 	}
 

@@ -242,3 +242,16 @@ func NewActivateMFAInput(accessToken, code string) (ActivateMFAInput, error) {
 		Code:        code,
 	}, nil
 }
+
+type LogoutInput struct {
+	AccessToken string
+}
+
+func NewLogoutInput(accessToken string) (LogoutInput, error) {
+	if len(accessToken) == 0 {
+		return LogoutInput{}, app_error.NewApiError(http.StatusBadRequest, "Access token is required", fmt.Sprintf("Field: %s", "AccessToken"))
+	}
+	return LogoutInput{
+		AccessToken: accessToken,
+	}, nil
+}

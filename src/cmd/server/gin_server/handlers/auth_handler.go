@@ -157,3 +157,20 @@ func (h *AuthHandler) ActivateMfa() gin.HandlerFunc {
 		})
 	}
 }
+
+type logoutInput struct {
+	AccessToken string `json:"accessToken"`
+}
+
+func (h *AuthHandler) Logout() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		processRequestNoOutput(c, logoutInput{}, func(ctx context.Context, input logoutInput) error {
+			err := h.useCases.Logout.Execute(ctx, usecaseAuth.LogoutInput{
+				LogoutInput: domainAuth.LogoutInput{
+					AccessToken: input.AccessToken,
+				},
+			})
+			return err
+		})
+	}
+}

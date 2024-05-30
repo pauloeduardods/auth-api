@@ -24,6 +24,7 @@ type AuthService interface {
 	ActivateMFA(ctx context.Context, input ActivateMFAInput) error
 	VerifyMFA(ctx context.Context, input VerifyMFAInput) (*LoginOutput, error)
 	RemoveMFA(ctx context.Context, input RemoveMFAInput) error
+	Logout(ctx context.Context, input LogoutInput) error
 }
 
 type AuthClient interface {
@@ -41,6 +42,7 @@ type AuthClient interface {
 	ActivateMFA(ctx context.Context, input ActivateMFAInput) error
 	VerifyMFA(ctx context.Context, input VerifyMFAInput) (*LoginOutput, error)
 	RemoveMFA(ctx context.Context, input RemoveMFAInput) error
+	Logout(ctx context.Context, input LogoutInput) error
 }
 
 type Claims struct {
