@@ -138,3 +138,22 @@ func (h *AuthHandler) RemoveMfa() gin.HandlerFunc {
 		})
 	}
 }
+
+type activateMfaInput struct {
+	AccessToken string `json:"accessToken"`
+	Code        string `json:"code"`
+}
+
+func (h *AuthHandler) ActivateMfa() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		processRequestNoOutput(c, activateMfaInput{}, func(ctx context.Context, input activateMfaInput) error {
+			err := h.useCases.ActivateMFA.Execute(ctx, usecaseAuth.ActivateMFAInput{
+				ActivateMFAInput: domainAuth.ActivateMFAInput{
+					AccessToken: input.AccessToken,
+					Code:        input.Code,
+				},
+			})
+			return err
+		})
+	}
+}

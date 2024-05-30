@@ -14,6 +14,7 @@ type UseCases struct {
 	RemoveMFA     *RemoveMFAUseCase
 	ConfirmSignUp *ConfirmSignUpUseCase
 	GetMe         *GetMeUseCase
+	ActivateMFA   *ActivateMFAUseCase
 }
 
 func NewUseCases(authService auth.AuthService) *UseCases {
@@ -27,5 +28,6 @@ func NewUseCases(authService auth.AuthService) *UseCases {
 		RemoveMFA:     NewRemoveMFAUseCase(authService),
 		ConfirmSignUp: NewConfirmSignUpUseCase(authService),
 		GetMe:         NewGetMeUseCase(authService),
+		ActivateMFA:   NewActivateMFAUseCase(authService),
 	}
 }

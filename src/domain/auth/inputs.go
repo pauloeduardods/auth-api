@@ -222,3 +222,23 @@ func NewDeleteUserInput(username string) (DeleteUserInput, error) {
 		Username: lowerCaseUsername,
 	}, nil
 }
+
+type ActivateMFAInput struct {
+	AccessToken string
+	Code        string
+}
+
+func NewActivateMFAInput(accessToken, code string) (ActivateMFAInput, error) {
+	if len(accessToken) == 0 {
+		return ActivateMFAInput{}, app_error.NewApiError(http.StatusBadRequest, "Access token is required", fmt.Sprintf("Field: %s", "AccessToken"))
+	}
+
+	if err := validator.ValidateNumeric(code); err != nil {
+		return ActivateMFAInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid code", fmt.Sprintf("Field: %s", "Code"))
+	}
+
+	return ActivateMFAInput{
+		AccessToken: accessToken,
+		Code:        code,
+	}, nil
+}

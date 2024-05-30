@@ -48,7 +48,50 @@ func (c *cognitoClient) AddMFA(ctx context.Context, input auth.AddMFAInput) (*au
 
 	return &auth.AddMFAOutput{
 		SecretCode: *associateSoftwareTokenOutput.SecretCode,
+		Session:    associateSoftwareTokenOutput.Session,
 	}, nil
+}
+
+func (c *cognitoClient) ActivateMFA(ctx context.Context, input auth.ActivateMFAInput) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	verifySoftwareTokenInput := &cognito.VerifySoftwareTokenInput{
+		UserCode:    aws.String(input.Code),
+		AccessToken: aws.String(input.AccessToken),
+	}
+
+	verifyOut, err := c.client.VerifySoftwareToken(ctx, verifySoftwareTokenInput)
+	if err != nil {
+		errorType := err.Error()
+		if strings.Contains(errorType, "CodeMismatchException") {
+			return app_error.NewApiError(400, "Invalid MFA code")
+		}
+		if strings.Contains(errorType, "NotAuthorizedException") {
+			return app_error.NewApiError(401, "Invalid access token")
+		}
+		c.logger.Error("Cognito verify software token error", err)
+		return app_error.NewApiError(400, "Failed to verify software token")
+	}
+	if verifyOut.Status != "SUCCESS" {
+		return app_error.NewApiError(400, "Invalid MFA code")
+	}
+
+	setUserMFAPreferenceInput := &cognito.SetUserMFAPreferenceInput{
+		AccessToken: aws.String(input.AccessToken),
+		SoftwareTokenMfaSettings: &types.SoftwareTokenMfaSettingsType{
+			Enabled:      true,
+			PreferredMfa: true,
+		},
+	}
+
+	_, err = c.client.SetUserMFAPreference(ctx, setUserMFAPreferenceInput)
+	if err != nil {
+		c.logger.Error("Cognito set user MFA preference error", err)
+		return app_error.NewApiError(500, "Failed to set user MFA preference")
+	}
+
+	return nil
 }
 
 func (c *cognitoClient) VerifyMFA(ctx context.Context, input auth.VerifyMFAInput) (*auth.LoginOutput, error) {

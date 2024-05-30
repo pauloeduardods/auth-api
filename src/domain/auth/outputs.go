@@ -30,5 +30,6 @@ type CreateAdminOutput struct {
 }
 
 type AddMFAOutput struct {
-	SecretCode string `json:"secretCode"`
+	SecretCode string  `json:"secretCode"`
+	Session    *string `json:"session,omitempty"`
 }

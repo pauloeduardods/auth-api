@@ -21,6 +21,7 @@ type AuthService interface {
 	RefreshToken(ctx context.Context, input RefreshTokenInput) (*RefreshTokenOutput, error)
 	CreateAdmin(ctx context.Context, input CreateAdminInput) (*CreateAdminOutput, error)
 	AddMFA(ctx context.Context, input AddMFAInput) (*AddMFAOutput, error)
+	ActivateMFA(ctx context.Context, input ActivateMFAInput) error
 	VerifyMFA(ctx context.Context, input VerifyMFAInput) (*LoginOutput, error)
 	RemoveMFA(ctx context.Context, input RemoveMFAInput) error
 }
@@ -37,6 +38,7 @@ type AuthClient interface {
 	RefreshToken(ctx context.Context, input RefreshTokenInput) (*RefreshTokenOutput, error)
 	CreateAdmin(ctx context.Context, input CreateAdminInput) (*CreateAdminOutput, error)
 	AddMFA(ctx context.Context, input AddMFAInput) (*AddMFAOutput, error)
+	ActivateMFA(ctx context.Context, input ActivateMFAInput) error
 	VerifyMFA(ctx context.Context, input VerifyMFAInput) (*LoginOutput, error)
 	RemoveMFA(ctx context.Context, input RemoveMFAInput) error
 }

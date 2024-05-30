@@ -56,6 +56,10 @@ func (a *auth) AddMFA(ctx context.Context, input AddMFAInput) (*AddMFAOutput, er
 	return a.cognitoAuth.AddMFA(ctx, input)
 }
 
+func (a *auth) ActivateMFA(ctx context.Context, input ActivateMFAInput) error {
+	return a.cognitoAuth.ActivateMFA(ctx, input)
+}
+
 func (a *auth) VerifyMFA(ctx context.Context, input VerifyMFAInput) (*LoginOutput, error) {
 	return a.cognitoAuth.VerifyMFA(ctx, input)
 }
