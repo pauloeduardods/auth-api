@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS users (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    phone VARCHAR(15)
+);
+
+CREATE TYPE admin_status AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
+
+CREATE TABLE IF NOT EXISTS admins (
+    email VARCHAR(100) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    status admin_status NOT NULL
+);

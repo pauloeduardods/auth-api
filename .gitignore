@@ -26,5 +26,8 @@ node_modules/
 # Binaries for programs and plugins
 /bin
 
+# Tmp files
+/tmp
+
 .env
 config.yaml

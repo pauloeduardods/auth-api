@@ -5,6 +5,7 @@ CONFIG_DIR=./src/config
 DOMAIN_DIR=./src/domain
 INTERNAL_DIR=./src/internal
 PKG_DIR=./src/pkg
+DB_DIR=./db
 
 GO=go
 GOFMT=gofmt
@@ -37,4 +38,13 @@ clean:
 deps:
 	$(GO) get -u ./...
 
-.PHONY: all build run fmt vet test clean deps env
+database:
+	docker-compose -f docker-compose.database.yml up  -d 
+
+database-down:
+	docker-compose -f docker-compose.database.yml down
+
+db-create-tables:
+	docker-compose -f docker-compose.database.yml exec postgres psql -U myuser -d mydatabase -a -f /scripts/schema.sql
+
+.PHONY: all build run fmt vet test clean deps database database-down db-create-tables
