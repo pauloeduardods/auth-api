@@ -6,14 +6,14 @@ import (
 )
 
 type RefreshTokenUseCase struct {
-	auth auth.Auth
+	auth auth.AuthService
 }
 
 type RefreshTokenInput struct {
 	auth.RefreshTokenInput
 }
 
-func NewRefreshTokenUseCase(auth auth.Auth) *RefreshTokenUseCase {
+func NewRefreshTokenUseCase(auth auth.AuthService) *RefreshTokenUseCase {
 	return &RefreshTokenUseCase{
 		auth: auth,
 	}

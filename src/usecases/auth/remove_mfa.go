@@ -6,14 +6,14 @@ import (
 )
 
 type RemoveMFAUseCase struct {
-	auth auth.Auth
+	auth auth.AuthService
 }
 
 type RemoveMFAInput struct {
 	auth.RemoveMFAInput
 }
 
-func NewRemoveMFAUseCase(auth auth.Auth) *RemoveMFAUseCase {
+func NewRemoveMFAUseCase(auth auth.AuthService) *RemoveMFAUseCase {
 	return &RemoveMFAUseCase{
 		auth: auth,
 	}

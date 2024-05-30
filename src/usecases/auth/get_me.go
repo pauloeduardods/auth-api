@@ -6,14 +6,14 @@ import (
 )
 
 type GetMeUseCase struct {
-	auth auth.Auth
+	auth auth.AuthService
 }
 
 type GetMeInput struct {
 	auth.GetMeInput
 }
 
-func NewGetMeUseCase(auth auth.Auth) *GetMeUseCase {
+func NewGetMeUseCase(auth auth.AuthService) *GetMeUseCase {
 	return &GetMeUseCase{
 		auth: auth,
 	}

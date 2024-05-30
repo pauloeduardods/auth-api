@@ -16,7 +16,7 @@ type UseCases struct {
 	GetMe         *GetMeUseCase
 }
 
-func NewUseCases(authService auth.Auth) *UseCases {
+func NewUseCases(authService auth.AuthService) *UseCases {
 	return &UseCases{
 		Login:         NewLoginUseCase(authService),
 		AddGroup:      NewAddGroupUseCase(authService),

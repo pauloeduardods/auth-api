@@ -27,4 +27,5 @@ func NewRoutes(g *gin.RouterGroup, factory *factory.Factory, authMiddleware midd
 
 func (r *routes) ConfigRoutes() {
 	r.configAuthRoutes()
+	r.configUserRoutes()
 }

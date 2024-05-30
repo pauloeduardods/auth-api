@@ -8,7 +8,8 @@ type LoginOutput struct {
 }
 
 type SignUpOutput struct {
-	IsConfirmed bool `json:"isConfirmed"`
+	IsConfirmed bool   `json:"isConfirmed"`
+	Id          string `json:"id"`
 }
 
 type ConfirmSignUpOutput struct {

@@ -6,14 +6,14 @@ import (
 )
 
 type ConfirmSignUpUseCase struct {
-	auth auth.Auth
+	auth auth.AuthService
 }
 
 type ConfirmSignUpInput struct {
 	auth.ConfirmSignUpInput
 }
 
-func NewConfirmSignUpUseCase(auth auth.Auth) *ConfirmSignUpUseCase {
+func NewConfirmSignUpUseCase(auth auth.AuthService) *ConfirmSignUpUseCase {
 	return &ConfirmSignUpUseCase{
 		auth: auth,
 	}

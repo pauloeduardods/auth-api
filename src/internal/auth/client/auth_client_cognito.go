@@ -194,6 +194,7 @@ func (c *cognitoClient) SignUp(ctx context.Context, input auth.SignUpInput) (*au
 
 	out := &auth.SignUpOutput{
 		IsConfirmed: cognitoOut.UserConfirmed,
+		Id:          *cognitoOut.UserSub,
 	}
 	return out, nil
 }
@@ -391,4 +392,26 @@ func (c *cognitoClient) CreateAdmin(ctx context.Context, input auth.CreateAdminI
 	return &auth.CreateAdminOutput{
 		Username: input.Username,
 	}, nil
+}
+
+func (c *cognitoClient) DeleteUser(ctx context.Context, input auth.DeleteUserInput) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	deleteUserInput := &cognito.AdminDeleteUserInput{
+		UserPoolId: aws.String(c.userPoolId),
+		Username:   aws.String(input.Username),
+	}
+
+	_, err := c.client.AdminDeleteUser(ctx, deleteUserInput)
+	if err != nil {
+		errorType := err.Error()
+		if strings.Contains(errorType, "UserNotFoundException") {
+			return app_error.NewApiError(404, "User not found")
+		}
+		c.logger.Error("Cognito delete user error", err)
+		return err
+	}
+
+	return nil
 }

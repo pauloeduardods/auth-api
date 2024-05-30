@@ -6,14 +6,14 @@ import (
 )
 
 type RemoveGroupUseCase struct {
-	auth auth.Auth
+	auth auth.AuthService
 }
 
 type RemoveGroupInput struct {
 	auth.RemoveGroupInput
 }
 
-func NewRemoveGroupUseCase(auth auth.Auth) *RemoveGroupUseCase {
+func NewRemoveGroupUseCase(auth auth.AuthService) *RemoveGroupUseCase {
 	return &RemoveGroupUseCase{
 		auth: auth,
 	}

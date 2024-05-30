@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"monitoring-system/server/src/cmd/factory"
 	"monitoring-system/server/src/cmd/server"
@@ -11,6 +12,8 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -38,13 +41,27 @@ func main() {
 		cancel()
 	}()
 
+	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", appConfig.Sql.Host, appConfig.Sql.Port, appConfig.Sql.User, appConfig.Sql.Password, appConfig.Sql.Database)
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		logger.Error("Error connecting to database %v", err)
+		return
+	}
+	defer db.Close()
+
+	err = db.PingContext(ctx)
+	if err != nil {
+		logger.Error("Error pinging database %v", err)
+		return
+	}
+
 	awsConfig, err := config.LoadAwsConfig(ctx, appConfig.Aws, logger)
 	if err != nil {
 		logger.Error("Error loading AWS configuration %v", err)
 		return
 	}
 
-	factory, err := factory.New(ctx, logger, *awsConfig, *appConfig)
+	factory, err := factory.New(ctx, logger, *awsConfig, *appConfig, db)
 	if err != nil {
 		logger.Error("Error creating factory %v", err)
 		return

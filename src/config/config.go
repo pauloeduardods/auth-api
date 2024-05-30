@@ -17,10 +17,19 @@ type ApiConfig struct {
 	Port int    `mapstructure:"port"`
 }
 
+type SQLDatabaseConfig struct {
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	Database string `mapstructure:"database"`
+}
+
 type Config struct {
-	Aws AwsConfig `mapstructure:"aws"`
-	Api ApiConfig `mapstructure:"api"`
-	Env string    `mapstructure:"env"`
+	Aws AwsConfig         `mapstructure:"aws"`
+	Api ApiConfig         `mapstructure:"api"`
+	Sql SQLDatabaseConfig `mapstructure:"sql"`
+	Env string            `mapstructure:"env"`
 }
 
 func setDefaults() {
@@ -29,6 +38,12 @@ func setDefaults() {
 	viper.SetDefault("aws.region", "us-east-1")
 	viper.SetDefault("aws.cognito_client_id", "SET_ME")
 	viper.SetDefault("aws.cognito_user_pool_id", "SET_ME")
+
+	viper.SetDefault("sql.host", "localhost")
+	viper.SetDefault("sql.port", 5432)
+	viper.SetDefault("sql.user", "SET_ME")
+	viper.SetDefault("sql.password", "SET_ME")
+	viper.SetDefault("sql.database", "SET_ME")
 
 	viper.SetDefault("api.host", "0.0.0.0")
 	viper.SetDefault("api.port", 4000)

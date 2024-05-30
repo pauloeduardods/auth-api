@@ -6,7 +6,7 @@ type auth struct {
 	cognitoAuth AuthClient
 }
 
-func NewAuthService(cognitoAuth AuthClient) Auth {
+func NewAuthService(cognitoAuth AuthClient) AuthService {
 	return &auth{
 		cognitoAuth: cognitoAuth,
 	}
@@ -18,6 +18,10 @@ func (a *auth) Login(ctx context.Context, input LoginInput) (*LoginOutput, error
 
 func (a *auth) SignUp(ctx context.Context, input SignUpInput) (*SignUpOutput, error) {
 	return a.cognitoAuth.SignUp(ctx, input)
+}
+
+func (a *auth) RollbackSignUp(ctx context.Context, input SignUpInput) error {
+	return a.cognitoAuth.DeleteUser(ctx, DeleteUserInput{Username: input.Username})
 }
 
 func (a *auth) ConfirmSignUp(ctx context.Context, input ConfirmSignUpInput) (*ConfirmSignUpOutput, error) {

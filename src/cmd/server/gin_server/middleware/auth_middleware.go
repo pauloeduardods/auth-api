@@ -12,10 +12,10 @@ type AuthMiddleware interface {
 }
 
 type AuthMiddlewareImpl struct {
-	auth auth.Auth
+	auth auth.AuthService
 }
 
-func NewAuthMiddleware(a auth.Auth) AuthMiddleware {
+func NewAuthMiddleware(a auth.AuthService) AuthMiddleware {
 	return &AuthMiddlewareImpl{
 		auth: a,
 	}
@@ -59,7 +59,7 @@ func (a *AuthMiddlewareImpl) AuthMiddleware(groupNames ...auth.UserGroup) gin.Ha
 		}
 
 		c.Set("jwtToken", token)
-		c.Set("user", claims)
+		c.Set("claims", claims)
 
 		c.Next()
 	}

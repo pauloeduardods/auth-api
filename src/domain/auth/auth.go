@@ -9,9 +9,10 @@ const (
 	User  UserGroup = "User"
 )
 
-type Auth interface {
+type AuthService interface {
 	Login(ctx context.Context, input LoginInput) (*LoginOutput, error)
 	SignUp(ctx context.Context, input SignUpInput) (*SignUpOutput, error)
+	RollbackSignUp(ctx context.Context, input SignUpInput) error
 	ConfirmSignUp(ctx context.Context, input ConfirmSignUpInput) (*ConfirmSignUpOutput, error)
 	GetMe(ctx context.Context, input GetMeInput) (*GetMeOutput, error)
 	ValidateToken(ctx context.Context, token string) (*Claims, error)
@@ -27,6 +28,7 @@ type Auth interface {
 type AuthClient interface {
 	Login(ctx context.Context, input LoginInput) (*LoginOutput, error)
 	SignUp(ctx context.Context, input SignUpInput) (*SignUpOutput, error)
+	DeleteUser(ctx context.Context, input DeleteUserInput) error
 	ConfirmSignUp(ctx context.Context, input ConfirmSignUpInput) (*ConfirmSignUpOutput, error)
 	GetMe(ctx context.Context, input GetMeInput) (*GetMeOutput, error)
 	ValidateToken(ctx context.Context, token string) (*Claims, error)

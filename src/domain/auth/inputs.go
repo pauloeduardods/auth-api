@@ -208,3 +208,17 @@ func NewRemoveMFAInput(username string) (RemoveMFAInput, error) {
 		Username: lowerCaseUsername,
 	}, nil
 }
+
+type DeleteUserInput struct {
+	Username string
+}
+
+func NewDeleteUserInput(username string) (DeleteUserInput, error) {
+	lowerCaseUsername := strings.ToLower(username)
+	if err := validator.ValidateEmail(lowerCaseUsername); err != nil {
+		return DeleteUserInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Username"))
+	}
+	return DeleteUserInput{
+		Username: lowerCaseUsername,
+	}, nil
+}

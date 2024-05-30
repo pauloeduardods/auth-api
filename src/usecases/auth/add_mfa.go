@@ -6,14 +6,14 @@ import (
 )
 
 type AddMFAUseCase struct {
-	auth auth.Auth
+	auth auth.AuthService
 }
 
 type AddMFAInput struct {
 	auth.AddMFAInput
 }
 
-func NewAddMFAUseCase(auth auth.Auth) *AddMFAUseCase {
+func NewAddMFAUseCase(auth auth.AuthService) *AddMFAUseCase {
 	return &AddMFAUseCase{
 		auth: auth,
 	}

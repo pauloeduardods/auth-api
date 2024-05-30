@@ -6,14 +6,14 @@ import (
 )
 
 type VerifyMFAUseCase struct {
-	auth auth.Auth
+	auth auth.AuthService
 }
 
 type VerifyMFAInput struct {
 	auth.VerifyMFAInput
 }
 
-func NewVerifyMFAUseCase(auth auth.Auth) *VerifyMFAUseCase {
+func NewVerifyMFAUseCase(auth auth.AuthService) *VerifyMFAUseCase {
 	return &VerifyMFAUseCase{
 		auth: auth,
 	}

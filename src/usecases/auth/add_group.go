@@ -6,14 +6,14 @@ import (
 )
 
 type AddGroupUseCase struct {
-	auth auth.Auth
+	auth auth.AuthService
 }
 
 type AddGroupInput struct {
 	auth.AddGroupInput
 }
 
-func NewAddGroupUseCase(auth auth.Auth) *AddGroupUseCase {
+func NewAddGroupUseCase(auth auth.AuthService) *AddGroupUseCase {
 	return &AddGroupUseCase{
 		auth: auth,
 	}
