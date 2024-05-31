@@ -1,6 +1,13 @@
 package auth
 
-import "context"
+import (
+	"auth-api/src/pkg/app_error"
+	"context"
+)
+
+var (
+	ErrUserNotFound = app_error.NewApiError(404, "User not found")
+)
 
 type AuthService interface {
 	Login(ctx context.Context, input LoginInput) (*LoginOutput, error)

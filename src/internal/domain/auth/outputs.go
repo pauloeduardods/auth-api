@@ -19,6 +19,10 @@ type SignUpOutput struct {
 }
 
 func (output *SignUpOutput) Rollback(ctx context.Context, authService AuthService) error {
+	if output.Username == "" {
+		return nil
+	}
+
 	deleteUserInput := DeleteUserInput{
 		Username: output.Username,
 	}
@@ -46,6 +50,23 @@ type GetMeOutput struct {
 
 type CreateAdminOutput struct {
 	Username string `json:"username"`
+	Id       string `json:"id"`
+}
+
+func (output *CreateAdminOutput) Rollback(ctx context.Context, authService AuthService) error {
+	if output.Username == "" {
+		return nil
+	}
+	deleteUserInput := DeleteUserInput{
+		Username: output.Username,
+	}
+	if err := deleteUserInput.Validate(); err != nil {
+		return app_error.NewApiError(500, "Failed to validate rollback", err.Error())
+	}
+	if err := authService.DeleteUser(ctx, deleteUserInput); err != nil {
+		return app_error.NewApiError(500, "Failed to rollback user creation", err.Error())
+	}
+	return nil
 }
 
 type AddMFAOutput struct {

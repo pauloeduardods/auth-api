@@ -2,6 +2,7 @@ package auth_service
 
 import (
 	"auth-api/src/internal/domain/auth"
+	"auth-api/src/internal/domain/user"
 	"auth-api/src/pkg/app_error"
 	"auth-api/src/pkg/jwt_verify"
 	"auth-api/src/pkg/logger"
@@ -204,7 +205,7 @@ func (c *cognitoClient) Login(ctx context.Context, input auth.LoginInput) (*auth
 	return out, nil
 }
 
-func (c *cognitoClient) SignUp(ctx context.Context, input auth.SignUpInput) (*auth.SignUpOutput, error) {
+func (c *cognitoClient) SignUp(ctx context.Context, input auth.SignUpInput) (out *auth.SignUpOutput, execErr error) {
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
@@ -233,22 +234,25 @@ func (c *cognitoClient) SignUp(ctx context.Context, input auth.SignUpInput) (*au
 		return nil, err
 	}
 
-	out := &auth.SignUpOutput{
+	out = &auth.SignUpOutput{
 		IsConfirmed: cognitoOut.UserConfirmed,
 		Id:          *cognitoOut.UserSub,
 		Username:    input.Username,
 	}
+	defer func() {
+		if execErr != nil {
+			c.logger.Info("Rollback signup")
+			if err := out.Rollback(ctx, c); err != nil {
+				c.logger.Error("Rollback signup error", err)
+			}
+		}
+	}()
 
 	err = c.AddGroup(ctx, auth.AddGroupInput{
 		Username:  input.Username,
 		GroupName: auth.User,
 	})
 	if err != nil {
-		err := out.Rollback(ctx, c)
-		if err != nil {
-			c.logger.Error("Rollback signup error", err)
-		}
-
 		return nil, err
 	}
 
@@ -295,7 +299,7 @@ func (c *cognitoClient) GetMe(ctx context.Context, input auth.GetMeInput) (*auth
 			return nil, app_error.NewApiError(401, "Invalid access token")
 		}
 		if strings.Contains(errorType, "UserNotFoundException") {
-			return nil, app_error.NewApiError(404, "User not found")
+			return nil, user.ErrUserNotFound
 		}
 		c.logger.Error("Cognito get user error", err)
 		return nil, err
@@ -336,7 +340,7 @@ func (c *cognitoClient) AddGroup(ctx context.Context, input auth.AddGroupInput) 
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "UserNotFoundException") {
-			return app_error.NewApiError(404, "User not found")
+			return auth.ErrUserNotFound
 		}
 		if strings.Contains(errorType, "ResourceNotFoundException") {
 			return app_error.NewApiError(404, "Group not found")
@@ -362,7 +366,7 @@ func (c *cognitoClient) RemoveGroup(ctx context.Context, input auth.RemoveGroupI
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "UserNotFoundException") {
-			return app_error.NewApiError(404, "User not found")
+			return auth.ErrUserNotFound
 		}
 		if strings.Contains(errorType, "ResourceNotFoundException") {
 			return app_error.NewApiError(404, "Group not found")
@@ -403,7 +407,7 @@ func (c *cognitoClient) RefreshToken(ctx context.Context, input auth.RefreshToke
 	return out, nil
 }
 
-func (c *cognitoClient) CreateAdmin(ctx context.Context, input auth.CreateAdminInput) (*auth.CreateAdminOutput, error) {
+func (c *cognitoClient) CreateAdmin(ctx context.Context, input auth.CreateAdminInput) (out *auth.CreateAdminOutput, execErr error) {
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
@@ -427,7 +431,7 @@ func (c *cognitoClient) CreateAdmin(ctx context.Context, input auth.CreateAdminI
 		ForceAliasCreation: true,
 	}
 
-	_, err := c.client.AdminCreateUser(ctx, createUserInput)
+	cognitoOut, err := c.client.AdminCreateUser(ctx, createUserInput)
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "UsernameExistsException") {
@@ -437,17 +441,39 @@ func (c *cognitoClient) CreateAdmin(ctx context.Context, input auth.CreateAdminI
 		return nil, err
 	}
 
+	var userId string
+	for _, attr := range cognitoOut.User.Attributes {
+		if *attr.Name == "sub" { //TODO: Check if this is correct
+			userId = *attr.Value
+			break
+		}
+	}
+
+	out = &auth.CreateAdminOutput{
+		Id:       userId,
+		Username: input.Username,
+	}
+	defer func() {
+		if execErr != nil {
+			if err := out.Rollback(ctx, c); err != nil {
+				c.logger.Error("Rollback create admin error", err)
+			}
+		}
+	}()
+
+	if userId == "" {
+		return nil, app_error.NewApiError(500, "Failed to get user id")
+	}
+
 	err = c.AddGroup(ctx, auth.AddGroupInput{
 		Username:  input.Username,
 		GroupName: auth.Admin,
 	})
 	if err != nil {
-		return nil, err //TODO: Rollback create admin
+		return nil, err
 	}
 
-	return &auth.CreateAdminOutput{
-		Username: input.Username,
-	}, nil
+	return out, nil
 }
 
 func (c *cognitoClient) DeleteUser(ctx context.Context, input auth.DeleteUserInput) error {
@@ -463,7 +489,7 @@ func (c *cognitoClient) DeleteUser(ctx context.Context, input auth.DeleteUserInp
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "UserNotFoundException") {
-			return app_error.NewApiError(404, "User not found")
+			return auth.ErrUserNotFound
 		}
 		c.logger.Error("Cognito delete user error", err)
 		return err

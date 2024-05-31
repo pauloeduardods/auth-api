@@ -13,13 +13,6 @@ type RegisterUserUseCase struct {
 	logger      logger.Logger
 }
 
-// type RegisterUserInput struct {
-// 	Email    string
-// 	Password string
-// 	Name     string
-// 	Phone    *string
-// }
-
 type RegisterUserInput struct {
 	auth.SignUpInput
 	user.CreateUserInput
@@ -38,13 +31,29 @@ func (uc *RegisterUserUseCase) Execute(ctx context.Context, input RegisterUserIn
 		return err
 	}
 
+	getByEmailInput := &user.GetUserByEmailInput{
+		Email: input.CreateUserInput.Email,
+	}
+	if err := getByEmailInput.Validate(); err != nil {
+		return err
+	}
+	if exists, err := uc.userService.GetByEmail(getByEmailInput); err != nil {
+		if err != user.ErrUserNotFound {
+			return err
+		}
+	} else if exists != nil {
+		return user.ErrUserAlreadyExists
+	}
+
 	signUpOutput, err := uc.auth.SignUp(ctx, input.SignUpInput)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if execErr != nil {
-			signUpOutput.Rollback(ctx, uc.auth)
+			if err := signUpOutput.Rollback(ctx, uc.auth); err != nil {
+				uc.logger.Error("Error rolling back sign up: %s", err)
+			}
 		}
 	}()
 
