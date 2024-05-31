@@ -1,7 +1,7 @@
 package auth_usecases
 
 import (
-	"monitoring-system/server/src/internal/domain/auth"
+	"auth-api/src/internal/domain/auth"
 )
 
 type UseCases struct {

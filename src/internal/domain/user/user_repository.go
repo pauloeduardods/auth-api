@@ -1,6 +1,6 @@
 package user
 
-import "monitoring-system/server/src/pkg/app_error"
+import "auth-api/src/pkg/app_error"
 
 var (
 	ErrUserNotFound      = app_error.NewApiError(404, "User not found", "Field: id")

@@ -1,8 +1,8 @@
 package auth
 
 import (
+	"auth-api/src/pkg/app_error"
 	"context"
-	"monitoring-system/server/src/pkg/app_error"
 )
 
 type LoginOutput struct {

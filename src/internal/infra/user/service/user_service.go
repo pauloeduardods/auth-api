@@ -1,6 +1,6 @@
 package user_service
 
-import "monitoring-system/server/src/internal/domain/user"
+import "auth-api/src/internal/domain/user"
 
 type UserService struct {
 	repo user.UserRepository

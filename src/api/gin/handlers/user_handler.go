@@ -1,11 +1,11 @@
 package handlers
 
 import (
+	"auth-api/src/internal/domain/auth"
+	"auth-api/src/internal/domain/user"
+	user_usecases "auth-api/src/internal/usecases/user"
+	"auth-api/src/pkg/app_error"
 	"context"
-	"monitoring-system/server/src/internal/domain/auth"
-	"monitoring-system/server/src/internal/domain/user"
-	user_usecases "monitoring-system/server/src/internal/usecases/user"
-	"monitoring-system/server/src/pkg/app_error"
 
 	"github.com/gin-gonic/gin"
 )

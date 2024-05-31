@@ -1,8 +1,8 @@
 package config
 
 import (
+	"auth-api/src/pkg/logger"
 	"context"
-	"monitoring-system/server/src/pkg/logger"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"

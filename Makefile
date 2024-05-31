@@ -1,4 +1,4 @@
-BINARY=bin/monitoring-system.out
+BINARY=bin/auth-api.out
 
 API_DIR=./src/api
 CMD_DIR=./src/cmd

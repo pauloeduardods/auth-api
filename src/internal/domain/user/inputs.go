@@ -1,9 +1,9 @@
 package user
 
 import (
+	"auth-api/src/pkg/app_error"
+	"auth-api/src/pkg/validator"
 	"fmt"
-	"monitoring-system/server/src/pkg/app_error"
-	"monitoring-system/server/src/pkg/validator"
 	"net/http"
 	"strings"
 )

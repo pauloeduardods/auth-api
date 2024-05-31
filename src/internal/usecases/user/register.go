@@ -1,10 +1,10 @@
 package user_usecases
 
 import (
+	"auth-api/src/internal/domain/auth"
+	"auth-api/src/internal/domain/user"
+	"auth-api/src/pkg/logger"
 	"context"
-	"monitoring-system/server/src/internal/domain/auth"
-	"monitoring-system/server/src/internal/domain/user"
-	"monitoring-system/server/src/pkg/logger"
 )
 
 type RegisterUserUseCase struct {

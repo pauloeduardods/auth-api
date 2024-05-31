@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"monitoring-system/server/src/api/gin/middleware"
-	"monitoring-system/server/src/factory"
+	"auth-api/src/api/gin/middleware"
+	"auth-api/src/factory"
 
 	"github.com/gin-gonic/gin"
 )

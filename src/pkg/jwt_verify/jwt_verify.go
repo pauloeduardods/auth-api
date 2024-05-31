@@ -1,6 +1,7 @@
 package jwt_verify
 
 import (
+	"auth-api/src/pkg/logger"
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/binary"
@@ -8,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"math/big"
-	"monitoring-system/server/src/pkg/logger"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"

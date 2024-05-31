@@ -1,9 +1,9 @@
 package routes
 
 import (
-	"monitoring-system/server/src/api/gin/handlers"
-	"monitoring-system/server/src/api/gin/middleware"
-	"monitoring-system/server/src/internal/domain/auth"
+	"auth-api/src/api/gin/handlers"
+	"auth-api/src/api/gin/middleware"
+	"auth-api/src/internal/domain/auth"
 	"time"
 )
 

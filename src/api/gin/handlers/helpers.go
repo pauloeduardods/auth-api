@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"auth-api/src/pkg/app_error"
 	"context"
 	"io"
-	"monitoring-system/server/src/pkg/app_error"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

@@ -1,8 +1,8 @@
 package auth_usecases
 
 import (
+	"auth-api/src/internal/domain/auth"
 	"context"
-	"monitoring-system/server/src/internal/domain/auth"
 )
 
 type AddGroupUseCase struct {

@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"auth-api/src/internal/domain/auth"
+	auth_usecases "auth-api/src/internal/usecases/auth"
 	"context"
-	"monitoring-system/server/src/internal/domain/auth"
-	auth_usecases "monitoring-system/server/src/internal/usecases/auth"
 
 	"github.com/gin-gonic/gin"
 )

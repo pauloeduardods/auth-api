@@ -1,11 +1,11 @@
 package auth_service
 
 import (
+	"auth-api/src/internal/domain/auth"
+	"auth-api/src/pkg/app_error"
+	"auth-api/src/pkg/jwt_verify"
+	"auth-api/src/pkg/logger"
 	"context"
-	"monitoring-system/server/src/internal/domain/auth"
-	"monitoring-system/server/src/pkg/app_error"
-	"monitoring-system/server/src/pkg/jwt_verify"
-	"monitoring-system/server/src/pkg/logger"
 	"strings"
 	"time"
 

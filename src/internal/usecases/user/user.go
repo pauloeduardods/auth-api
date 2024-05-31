@@ -1,9 +1,9 @@
 package user_usecases
 
 import (
-	"monitoring-system/server/src/internal/domain/auth"
-	"monitoring-system/server/src/internal/domain/user"
-	"monitoring-system/server/src/pkg/logger"
+	"auth-api/src/internal/domain/auth"
+	"auth-api/src/internal/domain/user"
+	"auth-api/src/pkg/logger"
 )
 
 type UseCases struct {

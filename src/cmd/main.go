@@ -1,13 +1,13 @@
 package main
 
 import (
+	"auth-api/src/cmd/server"
+	"auth-api/src/config"
+	"auth-api/src/factory"
+	"auth-api/src/pkg/logger"
 	"context"
 	"database/sql"
 	"fmt"
-	"monitoring-system/server/src/cmd/server"
-	"monitoring-system/server/src/config"
-	"monitoring-system/server/src/factory"
-	"monitoring-system/server/src/pkg/logger"
 	"os"
 	"os/signal"
 	"sync"

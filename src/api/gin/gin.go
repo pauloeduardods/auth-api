@@ -1,10 +1,10 @@
 package gin
 
 import (
-	"monitoring-system/server/src/api/gin/middleware"
-	"monitoring-system/server/src/api/gin/routes"
-	"monitoring-system/server/src/factory"
-	"monitoring-system/server/src/pkg/logger"
+	"auth-api/src/api/gin/middleware"
+	"auth-api/src/api/gin/routes"
+	"auth-api/src/factory"
+	"auth-api/src/pkg/logger"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

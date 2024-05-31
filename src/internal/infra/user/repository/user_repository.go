@@ -1,9 +1,9 @@
 package user_repo
 
 import (
+	"auth-api/src/internal/domain/user"
+	"auth-api/src/pkg/logger"
 	"database/sql"
-	"monitoring-system/server/src/internal/domain/user"
-	"monitoring-system/server/src/pkg/logger"
 )
 
 type UserRepository struct {

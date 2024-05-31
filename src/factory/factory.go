@@ -1,18 +1,18 @@
 package factory
 
 import (
+	"auth-api/src/config"
+	"auth-api/src/internal/domain/auth"
+	"auth-api/src/internal/domain/user"
+	auth_service "auth-api/src/internal/infra/auth/service"
+	user_repo "auth-api/src/internal/infra/user/repository"
+	user_service "auth-api/src/internal/infra/user/service"
+	auth_usecases "auth-api/src/internal/usecases/auth"
+	user_usecases "auth-api/src/internal/usecases/user"
+	"auth-api/src/pkg/jwt_verify"
+	"auth-api/src/pkg/logger"
 	"context"
 	"database/sql"
-	"monitoring-system/server/src/config"
-	"monitoring-system/server/src/internal/domain/auth"
-	"monitoring-system/server/src/internal/domain/user"
-	auth_service "monitoring-system/server/src/internal/infra/auth/service"
-	user_repo "monitoring-system/server/src/internal/infra/user/repository"
-	user_service "monitoring-system/server/src/internal/infra/user/service"
-	auth_usecases "monitoring-system/server/src/internal/usecases/auth"
-	user_usecases "monitoring-system/server/src/internal/usecases/user"
-	"monitoring-system/server/src/pkg/jwt_verify"
-	"monitoring-system/server/src/pkg/logger"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"

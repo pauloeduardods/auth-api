@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"monitoring-system/server/src/internal/domain/auth"
-	"monitoring-system/server/src/pkg/app_error"
+	"auth-api/src/internal/domain/auth"
+	"auth-api/src/pkg/app_error"
 
 	"github.com/gin-gonic/gin"
 )

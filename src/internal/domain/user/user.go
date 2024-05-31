@@ -1,9 +1,9 @@
 package user
 
 import (
+	"auth-api/src/pkg/app_error"
 	"database/sql/driver"
 	"fmt"
-	"monitoring-system/server/src/pkg/app_error"
 	"net/http"
 
 	"github.com/google/uuid"
