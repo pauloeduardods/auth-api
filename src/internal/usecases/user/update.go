@@ -27,15 +27,14 @@ func (uc *UpdateUserUseCase) Execute(ctx context.Context, input UpdateUserInput)
 		return err
 	}
 
-	backup, err := uc.userService.Update(&input.UpdateUserInput)
+	updateOut, err := uc.userService.Update(&input.UpdateUserInput)
 	if err != nil {
-		execErr = err
 		return err
 	}
 	defer func() {
 		if execErr != nil {
-			if rollbackErr := uc.userService.RollbackUpdate(backup); rollbackErr != nil {
-				uc.logger.Error("RollbackUpdate error: %v", rollbackErr)
+			if err := updateOut.Rollback(ctx, uc.userService); err != nil {
+				uc.logger.Error("Error rolling back update user: %s", err)
 			}
 		}
 	}()

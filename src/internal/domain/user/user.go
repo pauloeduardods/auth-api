@@ -30,16 +30,6 @@ type User struct {
 	Phone *string `json:"phone,omitempty"`
 }
 
-type UserService interface {
-	GetByID(input *GetUserInput) (*User, error)
-	GetByEmail(email *GetUserByEmailInput) (*User, error)
-	Create(input *CreateUserInput) error
-	RollbackCreate(input *CreateUserInput) error
-	Update(user *UpdateUserInput) (backup *User, err error)
-	RollbackUpdate(backup *User) error
-	Delete(id *DeleteUserInput) error
-}
-
 func (id *UserID) Scan(value interface{}) error {
 	if value == nil {
 		return fmt.Errorf("scanning a nil value into UserID")

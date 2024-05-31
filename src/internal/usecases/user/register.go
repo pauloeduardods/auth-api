@@ -44,16 +44,7 @@ func (uc *RegisterUserUseCase) Execute(ctx context.Context, input RegisterUserIn
 	}
 	defer func() {
 		if execErr != nil {
-			deleteUserInput := auth.DeleteUserInput{
-				Username: input.Email,
-			}
-			if err := deleteUserInput.Validate(); err != nil {
-				uc.logger.Error("RollbackSignUp error: %v", err)
-				return
-			}
-			if rollbackErr := uc.auth.DeleteUser(ctx, deleteUserInput); rollbackErr != nil {
-				uc.logger.Error("RollbackSignUp error: %v", rollbackErr)
-			}
+			signUpOutput.Rollback(ctx, uc.auth)
 		}
 	}()
 
@@ -68,15 +59,14 @@ func (uc *RegisterUserUseCase) Execute(ctx context.Context, input RegisterUserIn
 		return err
 	}
 
-	err = uc.userService.Create(&input.CreateUserInput)
+	createOut, err := uc.userService.Create(&input.CreateUserInput)
 	if err != nil {
-		execErr = err
 		return err
 	}
 	defer func() {
 		if execErr != nil {
-			if rollbackErr := uc.userService.RollbackCreate(&input.CreateUserInput); rollbackErr != nil {
-				uc.logger.Error("RollbackCreate error: %v", rollbackErr)
+			if err := createOut.Rollback(ctx, uc.userService); err != nil {
+				uc.logger.Error("Error rolling back create user: %s", err)
 			}
 		}
 	}()

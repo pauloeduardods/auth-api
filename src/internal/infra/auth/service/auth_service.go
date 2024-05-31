@@ -233,18 +233,25 @@ func (c *cognitoClient) SignUp(ctx context.Context, input auth.SignUpInput) (*au
 		return nil, err
 	}
 
+	out := &auth.SignUpOutput{
+		IsConfirmed: cognitoOut.UserConfirmed,
+		Id:          *cognitoOut.UserSub,
+		Username:    input.Username,
+	}
+
 	err = c.AddGroup(ctx, auth.AddGroupInput{
 		Username:  input.Username,
 		GroupName: auth.User,
 	})
 	if err != nil {
-		return nil, err //TODO: Rollback signup
+		err := out.Rollback(ctx, c)
+		if err != nil {
+			c.logger.Error("Rollback signup error", err)
+		}
+
+		return nil, err
 	}
 
-	out := &auth.SignUpOutput{
-		IsConfirmed: cognitoOut.UserConfirmed,
-		Id:          *cognitoOut.UserSub,
-	}
 	return out, nil
 }
 

@@ -20,73 +20,78 @@ func (u *UserService) GetByEmail(email *user.GetUserByEmailInput) (*user.User, e
 	return u.repo.GetByEmail(email)
 }
 
-func (u *UserService) Create(input *user.CreateUserInput) error {
+func (u *UserService) Create(input *user.CreateUserInput) (*user.CreateUserOutput, error) {
 	getUserByEmailInput := user.GetUserByEmailInput{Email: input.Email}
 	if err := getUserByEmailInput.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 
 	userExists, err := u.repo.GetByEmail(&getUserByEmailInput)
 	if err != nil {
 		if err != user.ErrUserNotFound {
-			return err
+			return nil, err
 		}
 	}
 
 	if userExists != nil {
-		return user.ErrUserAlreadyExists
+		return nil, user.ErrUserAlreadyExists
 	}
 
-	return u.repo.Create(input)
+	out := &user.CreateUserOutput{
+		ID: &input.ID,
+	}
+
+	if err := u.repo.Create(input); err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
 
-func (u *UserService) RollbackCreate(input *user.CreateUserInput) error {
-	return u.repo.Delete(&user.DeleteUserInput{ID: input.ID})
-}
-
-func (u *UserService) Update(input *user.UpdateUserInput) (backup *user.User, err error) {
+func (u *UserService) Update(input *user.UpdateUserInput) (*user.UpdateUserOutput, error) {
 	getUserInput := user.GetUserInput{ID: input.ID.String()}
 	if err := getUserInput.Validate(); err != nil {
 		return nil, err
 	}
 
-	out, err := u.repo.GetByID(&getUserInput)
+	userOut, err := u.repo.GetByID(&getUserInput)
 	if err != nil {
 		return nil, err
 	}
-	if out == nil {
+	if userOut == nil {
 		return nil, user.ErrUserNotFound
 	}
 
-	backup = out
-
-	return backup, u.repo.Update(input)
-}
-
-func (u *UserService) RollbackUpdate(backup *user.User) error {
-	rollbackInput := &user.UpdateUserInput{
-		ID:    backup.ID,
-		Name:  &backup.Name,
-		Email: &backup.Email,
-		Phone: backup.Phone,
+	out := &user.UpdateUserOutput{
+		Backup: userOut,
 	}
-	return u.repo.Update(rollbackInput)
+
+	return out, u.repo.Update(input)
 }
 
-func (u *UserService) Delete(id *user.DeleteUserInput) error {
+func (u *UserService) Delete(id *user.DeleteUserInput) (*user.DeleteUserOutput, error) {
 	getUserInput := user.GetUserInput{ID: id.ID.String()}
 	if err := getUserInput.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 
-	out, err := u.repo.GetByID(&getUserInput)
+	userOut, err := u.repo.GetByID(&getUserInput)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if out == nil {
-		return user.ErrUserNotFound
+	if userOut == nil {
+		return nil, user.ErrUserNotFound
 	}
 
-	return u.repo.Delete(id)
+	out := &user.DeleteUserOutput{
+		Backup: userOut,
+	}
+
+	if err := u.repo.Delete(id); err != nil {
+		return nil, err
+	}
+
+	return out, nil
+
 }

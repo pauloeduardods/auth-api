@@ -1,5 +1,10 @@
 package auth
 
+import (
+	"context"
+	"monitoring-system/server/src/pkg/app_error"
+)
+
 type LoginOutput struct {
 	AccessToken  string `json:"accessToken,omitempty"`
 	IdToken      string `json:"idToken,omitempty"`
@@ -10,6 +15,20 @@ type LoginOutput struct {
 type SignUpOutput struct {
 	IsConfirmed bool   `json:"isConfirmed"`
 	Id          string `json:"id"`
+	Username    string `json:"username"`
+}
+
+func (output *SignUpOutput) Rollback(ctx context.Context, authService AuthService) error {
+	deleteUserInput := DeleteUserInput{
+		Username: output.Username,
+	}
+	if err := deleteUserInput.Validate(); err != nil {
+		return app_error.NewApiError(500, "Failed to validate rollback", err.Error())
+	}
+	if err := authService.DeleteUser(ctx, deleteUserInput); err != nil {
+		return app_error.NewApiError(500, "Failed to rollback user creation", err.Error())
+	}
+	return nil
 }
 
 type ConfirmSignUpOutput struct {
