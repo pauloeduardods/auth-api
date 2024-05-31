@@ -1,8 +1,8 @@
 BINARY=bin/monitoring-system.out
 
+API_DIR=./src/api
 CMD_DIR=./src/cmd
 CONFIG_DIR=./src/config
-DOMAIN_DIR=./src/domain
 INTERNAL_DIR=./src/internal
 PKG_DIR=./src/pkg
 DB_DIR=./db
@@ -23,7 +23,7 @@ run: build
 	$(BINARY)
 
 fmt:
-	$(GOFMT) -w $(CMD_DIR) $(CONFIG_DIR) $(DOMAIN_DIR) $(INTERNAL_DIR) $(PKG_DIR)
+	$(GOFMT) -w $(API_DIR) $(CMD_DIR) $(CONFIG_DIR) $(INTERNAL_DIR) $(PKG_DIR)
 
 vet:
 	$(GO) vet $(PKGS)

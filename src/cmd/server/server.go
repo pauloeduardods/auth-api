@@ -2,8 +2,8 @@ package server
 
 import (
 	"context"
+	"monitoring-system/server/src/api/gin"
 	"monitoring-system/server/src/cmd/factory"
-	"monitoring-system/server/src/cmd/server/gin_server"
 	"monitoring-system/server/src/config"
 	"monitoring-system/server/src/pkg/logger"
 	"net/http"
@@ -13,29 +13,29 @@ import (
 )
 
 type Server struct {
-	log        logger.Logger
-	config     *config.Config
-	gin_server *gin_server.Gin
-	server     *http.Server
-	ctx        context.Context
+	log    logger.Logger
+	config *config.Config
+	gin    *gin.Gin
+	server *http.Server
+	ctx    context.Context
 }
 
 func New(ctx context.Context, awsConfig *aws.Config, config *config.Config, logger logger.Logger, factory *factory.Factory) *Server {
-	gin := gin_server.New(logger, factory)
+	gin := gin.New(logger, factory)
 
 	return &Server{
-		config:     config,
-		gin_server: gin,
-		log:        logger,
-		ctx:        ctx,
+		config: config,
+		gin:    gin,
+		log:    logger,
+		ctx:    ctx,
 	}
 }
 
 func (s *Server) Start() error {
 	s.log.Info("Starting server %s:%d", s.config.Api.Host, s.config.Api.Port)
 
-	s.gin_server.SetupMiddlewares()
-	s.gin_server.SetupApi()
+	s.gin.SetupMiddlewares()
+	s.gin.SetupApi()
 
 	go func() {
 		<-s.ctx.Done()
@@ -49,7 +49,7 @@ func (s *Server) Start() error {
 
 	s.server = &http.Server{
 		Addr:    s.config.Api.Host + ":" + strconv.Itoa(s.config.Api.Port),
-		Handler: s.gin_server.Gin,
+		Handler: s.gin.Gin,
 	}
 
 	err := s.server.ListenAndServe()
