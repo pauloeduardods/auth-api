@@ -3,7 +3,7 @@ package gin
 import (
 	"monitoring-system/server/src/api/gin/middleware"
 	"monitoring-system/server/src/api/gin/routes"
-	"monitoring-system/server/src/cmd/factory"
+	"monitoring-system/server/src/factory"
 	"monitoring-system/server/src/pkg/logger"
 	"net/http"
 

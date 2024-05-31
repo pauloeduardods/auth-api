@@ -2,7 +2,7 @@ package routes
 
 import (
 	"monitoring-system/server/src/api/gin/middleware"
-	"monitoring-system/server/src/cmd/factory"
+	"monitoring-system/server/src/factory"
 
 	"github.com/gin-gonic/gin"
 )

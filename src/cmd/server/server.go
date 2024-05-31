@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"monitoring-system/server/src/api/gin"
-	"monitoring-system/server/src/cmd/factory"
 	"monitoring-system/server/src/config"
+	"monitoring-system/server/src/factory"
 	"monitoring-system/server/src/pkg/logger"
 	"net/http"
 	"strconv"
