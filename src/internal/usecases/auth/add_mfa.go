@@ -20,10 +20,9 @@ func NewAddMFAUseCase(auth auth.AuthService) *AddMFAUseCase {
 }
 
 func (uc *AddMFAUseCase) Execute(ctx context.Context, input AddMFAInput) (*auth.AddMFAOutput, error) {
-	addMFAInput, err := auth.NewAddMFAInput(input.AccessToken)
-	if err != nil {
+	if err := input.AddMFAInput.Validate(); err != nil {
 		return nil, err
 	}
 
-	return uc.auth.AddMFA(ctx, addMFAInput)
+	return uc.auth.AddMFA(ctx, input.AddMFAInput)
 }

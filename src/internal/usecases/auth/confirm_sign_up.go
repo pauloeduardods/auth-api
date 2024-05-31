@@ -20,10 +20,9 @@ func NewConfirmSignUpUseCase(auth auth.AuthService) *ConfirmSignUpUseCase {
 }
 
 func (uc *ConfirmSignUpUseCase) Execute(ctx context.Context, input ConfirmSignUpInput) (*auth.ConfirmSignUpOutput, error) {
-	confirmSignUpInput, err := auth.NewConfirmSignUpInput(input.Username, input.Code)
-	if err != nil {
+	if err := input.ConfirmSignUpInput.Validate(); err != nil {
 		return nil, err
 	}
 
-	return uc.auth.ConfirmSignUp(ctx, confirmSignUpInput)
+	return uc.auth.ConfirmSignUp(ctx, input.ConfirmSignUpInput)
 }

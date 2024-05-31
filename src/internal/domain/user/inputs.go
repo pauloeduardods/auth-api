@@ -15,25 +15,29 @@ type CreateUserInput struct {
 	Phone *string
 }
 
-func NewCreateUserInput(id, name, email string, phone *string) (CreateUserInput, error) {
-	userID, err := ParseUserID(id)
+func (input *CreateUserInput) Validate() error {
+	userID, err := ParseUserID(input.ID.String())
 	if err != nil {
-		return CreateUserInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid user ID", fmt.Sprintf("Field: %s", "ID"))
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid user ID", fmt.Sprintf("Field: %s", "ID"))
+	}
+	input.ID = userID
+
+	lowerCaseEmail, err := validateEmail(input.Email)
+	if err != nil {
+		return err
+	}
+	input.Email = lowerCaseEmail
+
+	if err := validator.ValidateStringLength(input.Name, 3, 100); err != nil {
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid name length", fmt.Sprintf("Field: %s", "Name"))
 	}
 
-	lowerCaseEmail := strings.ToLower(email)
-	if err := validator.ValidateEmail(lowerCaseEmail); err != nil {
-		return CreateUserInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Email"))
+	if input.Phone != nil {
+		if err := validator.ValidateStringLength(*input.Phone, 10, 15); err != nil {
+			return app_error.NewApiError(http.StatusBadRequest, "Invalid phone number length", fmt.Sprintf("Field: %s", "Phone"))
+		}
 	}
-	if err := validator.ValidateStringLength(name, 3, 100); err != nil {
-		return CreateUserInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid name length", fmt.Sprintf("Field: %s", "Name"))
-	}
-	return CreateUserInput{
-		ID:    userID,
-		Name:  name,
-		Email: lowerCaseEmail,
-		Phone: phone,
-	}, nil
+	return nil
 }
 
 type UpdateUserInput struct {
@@ -43,75 +47,77 @@ type UpdateUserInput struct {
 	Phone *string
 }
 
-func NewUpdateUserInput(id string, name, email, phone *string) (UpdateUserInput, error) {
-	userID, err := ParseUserID(id)
+func (input *UpdateUserInput) Validate() error {
+	userID, err := ParseUserID(input.ID.String())
 	if err != nil {
-		return UpdateUserInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid user ID", fmt.Sprintf("Field: %s", "ID"))
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid user ID", fmt.Sprintf("Field: %s", "ID"))
 	}
-	if email != nil {
-		lowerCaseEmail := strings.ToLower(*email)
-		if err := validator.ValidateEmail(lowerCaseEmail); err != nil {
-			return UpdateUserInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Email"))
+	input.ID = userID
+
+	if input.Email != nil {
+		lowerCaseEmail, err := validateEmail(*input.Email)
+		if err != nil {
+			return err
 		}
-		email = &lowerCaseEmail
+		input.Email = &lowerCaseEmail
 	}
-	if name != nil {
-		if err := validator.ValidateStringLength(*name, 3, 100); err != nil {
-			return UpdateUserInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid name length", fmt.Sprintf("Field: %s", "Name"))
-		}
-	}
-	if phone != nil {
-		if err := validator.ValidateStringLength(*phone, 10, 15); err != nil {
-			return UpdateUserInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid phone number length", fmt.Sprintf("Field: %s", "Phone"))
+
+	if input.Name != nil {
+		if err := validator.ValidateStringLength(*input.Name, 3, 100); err != nil {
+			return app_error.NewApiError(http.StatusBadRequest, "Invalid name length", fmt.Sprintf("Field: %s", "Name"))
 		}
 	}
 
-	return UpdateUserInput{
-		ID:    userID,
-		Name:  name,
-		Email: email,
-		Phone: phone,
-	}, nil
+	if input.Phone != nil {
+		if err := validator.ValidateStringLength(*input.Phone, 10, 15); err != nil {
+			return app_error.NewApiError(http.StatusBadRequest, "Invalid phone number length", fmt.Sprintf("Field: %s", "Phone"))
+		}
+	}
+	return nil
 }
 
 type GetUserInput struct {
 	ID string
 }
 
-func NewGetUserInput(id string) (GetUserInput, error) {
-	_, err := ParseUserID(id)
+func (input *GetUserInput) Validate() error {
+	_, err := ParseUserID(input.ID)
 	if err != nil {
-		return GetUserInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid user ID", fmt.Sprintf("Field: %s", "ID"))
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid user ID", fmt.Sprintf("Field: %s", "ID"))
 	}
-	return GetUserInput{
-		ID: id,
-	}, nil
+	return nil
 }
 
 type DeleteUserInput struct {
 	ID UserID
 }
 
-func NewDeleteUserInput(id string) (DeleteUserInput, error) {
-	userID, err := ParseUserID(id)
+func (input *DeleteUserInput) Validate() error {
+	userID, err := ParseUserID(input.ID.String())
 	if err != nil {
-		return DeleteUserInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid user ID", fmt.Sprintf("Field: %s", "ID"))
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid user ID", fmt.Sprintf("Field: %s", "ID"))
 	}
-	return DeleteUserInput{
-		ID: userID,
-	}, nil
+	input.ID = userID
+	return nil
 }
 
 type GetUserByEmailInput struct {
 	Email string
 }
 
-func NewGetUserByEmailInput(email string) (GetUserByEmailInput, error) {
+func (input *GetUserByEmailInput) Validate() error {
+	lowerCaseEmail, err := validateEmail(input.Email)
+	if err != nil {
+		return err
+	}
+	input.Email = lowerCaseEmail
+	return nil
+}
+
+func validateEmail(email string) (string, error) {
 	lowerCaseEmail := strings.ToLower(email)
 	if err := validator.ValidateEmail(lowerCaseEmail); err != nil {
-		return GetUserByEmailInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Email"))
+		return "", app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Email"))
 	}
-	return GetUserByEmailInput{
-		Email: lowerCaseEmail,
-	}, nil
+	return lowerCaseEmail, nil
 }

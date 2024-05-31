@@ -3,6 +3,8 @@ package user
 import (
 	"database/sql/driver"
 	"fmt"
+	"monitoring-system/server/src/pkg/app_error"
+	"net/http"
 
 	"github.com/google/uuid"
 )
@@ -11,7 +13,10 @@ type UserID uuid.UUID
 
 func ParseUserID(id string) (UserID, error) {
 	parsedID, err := uuid.Parse(id)
-	return UserID(parsedID), err
+	if err == nil {
+		return UserID(parsedID), nil
+	}
+	return UserID(uuid.Nil), app_error.NewApiError(http.StatusBadRequest, "Invalid user ID", fmt.Sprintf("Field: %s", "ID"))
 }
 
 func (id UserID) String() string {

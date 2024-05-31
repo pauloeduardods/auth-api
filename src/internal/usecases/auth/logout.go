@@ -20,10 +20,9 @@ func NewLogoutUseCase(auth auth.AuthService) *LogoutUseCase {
 }
 
 func (uc *LogoutUseCase) Execute(ctx context.Context, input LogoutInput) error {
-	logoutInput, err := auth.NewLogoutInput(input.AccessToken)
-	if err != nil {
+	if err := input.LogoutInput.Validate(); err != nil {
 		return err
 	}
 
-	return uc.auth.Logout(ctx, logoutInput)
+	return uc.auth.Logout(ctx, input.LogoutInput)
 }

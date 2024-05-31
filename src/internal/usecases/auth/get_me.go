@@ -20,10 +20,9 @@ func NewGetMeUseCase(auth auth.AuthService) *GetMeUseCase {
 }
 
 func (uc *GetMeUseCase) Execute(ctx context.Context, input GetMeInput) (*auth.GetMeOutput, error) {
-	getMesInput, err := auth.NewGetMeInput(input.AccessToken)
-	if err != nil {
+	if err := input.GetMeInput.Validate(); err != nil {
 		return nil, err
 	}
 
-	return uc.auth.GetMe(ctx, getMesInput)
+	return uc.auth.GetMe(ctx, input.GetMeInput)
 }

@@ -20,10 +20,9 @@ func NewRemoveMFAUseCase(auth auth.AuthService) *RemoveMFAUseCase {
 }
 
 func (uc *RemoveMFAUseCase) Execute(ctx context.Context, input RemoveMFAInput) error {
-	removeMFAInput, err := auth.NewRemoveMFAInput(input.AccessToken)
-	if err != nil {
+	if err := input.RemoveMFAInput.Validate(); err != nil {
 		return err
 	}
 
-	return uc.auth.RemoveMFA(ctx, removeMFAInput)
+	return uc.auth.RemoveMFA(ctx, input.RemoveMFAInput)
 }

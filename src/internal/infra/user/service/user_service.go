@@ -21,8 +21,8 @@ func (u *UserService) GetByEmail(email *user.GetUserByEmailInput) (*user.User, e
 }
 
 func (u *UserService) Create(input *user.CreateUserInput) error {
-	getUserByEmailInput, err := user.NewGetUserByEmailInput(input.Email)
-	if err != nil {
+	getUserByEmailInput := user.GetUserByEmailInput{Email: input.Email}
+	if err := getUserByEmailInput.Validate(); err != nil {
 		return err
 	}
 
@@ -45,8 +45,8 @@ func (u *UserService) RollbackCreate(input *user.CreateUserInput) error {
 }
 
 func (u *UserService) Update(input *user.UpdateUserInput) (backup *user.User, err error) {
-	getUserInput, err := user.NewGetUserInput(input.ID.String())
-	if err != nil {
+	getUserInput := user.GetUserInput{ID: input.ID.String()}
+	if err := getUserInput.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -74,8 +74,8 @@ func (u *UserService) RollbackUpdate(backup *user.User) error {
 }
 
 func (u *UserService) Delete(id *user.DeleteUserInput) error {
-	getUserInput, err := user.NewGetUserInput(id.ID.String())
-	if err != nil {
+	getUserInput := user.GetUserInput{ID: id.ID.String()}
+	if err := getUserInput.Validate(); err != nil {
 		return err
 	}
 

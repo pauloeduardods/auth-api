@@ -20,10 +20,9 @@ func NewRemoveGroupUseCase(auth auth.AuthService) *RemoveGroupUseCase {
 }
 
 func (uc *RemoveGroupUseCase) Execute(ctx context.Context, input RemoveGroupInput) error {
-	removeGroupInput, err := auth.NewRemoveGroupInput(input.Username, input.GroupName)
-	if err != nil {
+	if err := input.RemoveGroupInput.Validate(); err != nil {
 		return err
 	}
 
-	return uc.auth.RemoveGroup(ctx, removeGroupInput)
+	return uc.auth.RemoveGroup(ctx, input.RemoveGroupInput)
 }

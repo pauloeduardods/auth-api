@@ -12,10 +12,7 @@ type UpdateUserUseCase struct {
 }
 
 type UpdateUserInput struct {
-	// Email *string
-	Id    string
-	Name  *string
-	Phone *string
+	user.UpdateUserInput
 }
 
 func NewUpdateUserUseCase(userService user.UserService, logger logger.Logger) *UpdateUserUseCase {
@@ -26,13 +23,11 @@ func NewUpdateUserUseCase(userService user.UserService, logger logger.Logger) *U
 }
 
 func (uc *UpdateUserUseCase) Execute(ctx context.Context, input UpdateUserInput) (execErr error) {
-	updateUserInput, err := user.NewUpdateUserInput(input.Id, input.Name, nil, input.Phone)
-	if err != nil {
-		execErr = err
+	if err := input.UpdateUserInput.Validate(); err != nil {
 		return err
 	}
 
-	backup, err := uc.userService.Update(&updateUserInput)
+	backup, err := uc.userService.Update(&input.UpdateUserInput)
 	if err != nil {
 		execErr = err
 		return err

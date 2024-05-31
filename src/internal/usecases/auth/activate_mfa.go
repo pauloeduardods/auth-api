@@ -20,10 +20,9 @@ func NewActivateMFAUseCase(auth auth.AuthService) *ActivateMFAUseCase {
 }
 
 func (uc *ActivateMFAUseCase) Execute(ctx context.Context, input ActivateMFAInput) error {
-	verifyMFAInput, err := auth.NewActivateMFAInput(input.AccessToken, input.Code)
-	if err != nil {
+	if err := input.ActivateMFAInput.Validate(); err != nil {
 		return err
 	}
 
-	return uc.auth.ActivateMFA(ctx, verifyMFAInput)
+	return uc.auth.ActivateMFA(ctx, input.ActivateMFAInput)
 }

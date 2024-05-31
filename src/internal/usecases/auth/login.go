@@ -20,10 +20,9 @@ func NewLoginUseCase(auth auth.AuthService) *LoginUseCase {
 }
 
 func (uc *LoginUseCase) Execute(ctx context.Context, input LoginInput) (*auth.LoginOutput, error) {
-	loginInput, err := auth.NewLoginInput(input.Username, input.Password)
-	if err != nil {
+	if err := input.LoginInput.Validate(); err != nil {
 		return nil, err
 	}
 
-	return uc.auth.Login(ctx, loginInput)
+	return uc.auth.Login(ctx, input.LoginInput)
 }

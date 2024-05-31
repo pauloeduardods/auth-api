@@ -10,7 +10,7 @@ import (
 	user_repo "monitoring-system/server/src/internal/infra/user/repository"
 	user_service "monitoring-system/server/src/internal/infra/user/service"
 	auth_usecases "monitoring-system/server/src/internal/usecases/auth"
-	"monitoring-system/server/src/internal/usecases/user_usecases"
+	user_usecases "monitoring-system/server/src/internal/usecases/user"
 	"monitoring-system/server/src/pkg/jwt_verify"
 	"monitoring-system/server/src/pkg/logger"
 

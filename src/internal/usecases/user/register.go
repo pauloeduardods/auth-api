@@ -13,11 +13,16 @@ type RegisterUserUseCase struct {
 	logger      logger.Logger
 }
 
+// type RegisterUserInput struct {
+// 	Email    string
+// 	Password string
+// 	Name     string
+// 	Phone    *string
+// }
+
 type RegisterUserInput struct {
-	Email    string
-	Password string
-	Name     string
-	Phone    *string
+	auth.SignUpInput
+	user.CreateUserInput
 }
 
 func NewRegisterUserUseCase(userService user.UserService, auth auth.AuthService, logger logger.Logger) *RegisterUserUseCase {
@@ -29,19 +34,20 @@ func NewRegisterUserUseCase(userService user.UserService, auth auth.AuthService,
 }
 
 func (uc *RegisterUserUseCase) Execute(ctx context.Context, input RegisterUserInput) (execErr error) {
-	signUpInput, err := auth.NewSignUpInput(input.Email, input.Password, input.Name)
-	if err != nil {
+	if err := input.SignUpInput.Validate(); err != nil {
 		return err
 	}
 
-	signUpOutput, err := uc.auth.SignUp(ctx, signUpInput)
+	signUpOutput, err := uc.auth.SignUp(ctx, input.SignUpInput)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if execErr != nil {
-			deleteUserInput, err := auth.NewDeleteUserInput(input.Email)
-			if err != nil {
+			deleteUserInput := auth.DeleteUserInput{
+				Username: input.Email,
+			}
+			if err := deleteUserInput.Validate(); err != nil {
 				uc.logger.Error("RollbackSignUp error: %v", err)
 				return
 			}
@@ -51,20 +57,25 @@ func (uc *RegisterUserUseCase) Execute(ctx context.Context, input RegisterUserIn
 		}
 	}()
 
-	createUserInput, err := user.NewCreateUserInput(signUpOutput.Id, input.Name, input.Email, input.Phone)
+	userId, err := user.ParseUserID(signUpOutput.Id)
 	if err != nil {
-		execErr = err
 		return err
 	}
 
-	err = uc.userService.Create(&createUserInput)
+	input.CreateUserInput.ID = userId
+
+	if err := input.CreateUserInput.Validate(); err != nil {
+		return err
+	}
+
+	err = uc.userService.Create(&input.CreateUserInput)
 	if err != nil {
 		execErr = err
 		return err
 	}
 	defer func() {
 		if execErr != nil {
-			if rollbackErr := uc.userService.RollbackCreate(&createUserInput); rollbackErr != nil {
+			if rollbackErr := uc.userService.RollbackCreate(&input.CreateUserInput); rollbackErr != nil {
 				uc.logger.Error("RollbackCreate error: %v", rollbackErr)
 			}
 		}

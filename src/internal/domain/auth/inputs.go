@@ -13,18 +13,17 @@ type LoginInput struct {
 	Password string
 }
 
-func NewLoginInput(username, password string) (LoginInput, error) {
-	lowerCaseUsername := strings.ToLower(username)
-	if err := validator.ValidateEmail(lowerCaseUsername); err != nil {
-		return LoginInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Username"))
+func (input *LoginInput) Validate() error {
+	lowerCaseUsername, err := validateEmail(input.Username)
+	if err != nil {
+		return err
 	}
-	if err := validator.ValidatePassword(password); err != nil {
-		return LoginInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid password", fmt.Sprintf("Field: %s", "Password"))
+	input.Username = lowerCaseUsername
+
+	if err := validator.ValidatePassword(input.Password); err != nil {
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid password", fmt.Sprintf("Field: %s", "Password"))
 	}
-	return LoginInput{
-		Username: lowerCaseUsername,
-		Password: password,
-	}, nil
+	return nil
 }
 
 type SignUpInput struct {
@@ -33,22 +32,21 @@ type SignUpInput struct {
 	Name     string
 }
 
-func NewSignUpInput(username, password, name string) (SignUpInput, error) {
-	lowerCaseUsername := strings.ToLower(username)
-	if err := validator.ValidateEmail(lowerCaseUsername); err != nil {
-		return SignUpInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Username"))
+func (input *SignUpInput) Validate() error {
+	lowerCaseUsername, err := validateEmail(input.Username)
+	if err != nil {
+		return err
 	}
-	if err := validator.ValidatePassword(password); err != nil {
-		return SignUpInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid password", fmt.Sprintf("Field: %s", "Password"))
+	input.Username = lowerCaseUsername
+
+	if err := validator.ValidatePassword(input.Password); err != nil {
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid password", fmt.Sprintf("Field: %s", "Password"))
 	}
-	if err := validator.ValidateStringLength(name, 3, 50); err != nil {
-		return SignUpInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid name length", fmt.Sprintf("Field: %s", "Name"))
+
+	if err := validator.ValidateStringLength(input.Name, 3, 50); err != nil {
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid name length", fmt.Sprintf("Field: %s", "Name"))
 	}
-	return SignUpInput{
-		Username: lowerCaseUsername,
-		Password: password,
-		Name:     name,
-	}, nil
+	return nil
 }
 
 type ConfirmSignUpInput struct {
@@ -56,44 +54,39 @@ type ConfirmSignUpInput struct {
 	Code     string
 }
 
-func NewConfirmSignUpInput(username, code string) (ConfirmSignUpInput, error) {
-	lowerCaseUsername := strings.ToLower(username)
-	if err := validator.ValidateEmail(lowerCaseUsername); err != nil {
-		return ConfirmSignUpInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Username"))
+func (input *ConfirmSignUpInput) Validate() error {
+	lowerCaseUsername, err := validateEmail(input.Username)
+	if err != nil {
+		return err
 	}
-	if err := validator.ValidateNumeric(code); err != nil {
-		return ConfirmSignUpInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid code", fmt.Sprintf("Field: %s", "Code"))
+	input.Username = lowerCaseUsername
+
+	if err := validator.ValidateNumeric(input.Code); err != nil {
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid code", fmt.Sprintf("Field: %s", "Code"))
 	}
-	return ConfirmSignUpInput{
-		Username: lowerCaseUsername,
-		Code:     code,
-	}, nil
+	return nil
 }
 
 type GetMeInput struct {
 	AccessToken string
 }
 
-func NewGetMeInput(accessToken string) (GetMeInput, error) {
-	if len(accessToken) == 0 {
-		return GetMeInput{}, app_error.NewApiError(http.StatusBadRequest, "Access token is required", fmt.Sprintf("Field: %s", "AccessToken"))
+func (input *GetMeInput) Validate() error {
+	if len(input.AccessToken) == 0 {
+		return app_error.NewApiError(http.StatusBadRequest, "Access token is required", fmt.Sprintf("Field: %s", "AccessToken"))
 	}
-	return GetMeInput{
-		AccessToken: accessToken,
-	}, nil
+	return nil
 }
 
 type RefreshTokenInput struct {
 	RefreshToken string
 }
 
-func NewRefreshTokenInput(refreshToken string) (RefreshTokenInput, error) {
-	if len(refreshToken) == 0 {
-		return RefreshTokenInput{}, app_error.NewApiError(http.StatusBadRequest, "Refresh token is required", fmt.Sprintf("Field: %s", "RefreshToken"))
+func (input *RefreshTokenInput) Validate() error {
+	if len(input.RefreshToken) == 0 {
+		return app_error.NewApiError(http.StatusBadRequest, "Refresh token is required", fmt.Sprintf("Field: %s", "RefreshToken"))
 	}
-	return RefreshTokenInput{
-		RefreshToken: refreshToken,
-	}, nil
+	return nil
 }
 
 type CreateAdminInput struct {
@@ -102,22 +95,21 @@ type CreateAdminInput struct {
 	Username string
 }
 
-func NewCreateAdminInput(username, password, name string) (CreateAdminInput, error) {
-	lowerCaseUsername := strings.ToLower(username)
-	if err := validator.ValidateEmail(lowerCaseUsername); err != nil {
-		return CreateAdminInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Username"))
+func (input *CreateAdminInput) Validate() error {
+	lowerCaseUsername, err := validateEmail(input.Username)
+	if err != nil {
+		return err
 	}
-	if err := validator.ValidatePassword(password); err != nil {
-		return CreateAdminInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid password", fmt.Sprintf("Field: %s", "Password"))
+	input.Username = lowerCaseUsername
+
+	if err := validator.ValidatePassword(input.Password); err != nil {
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid password", fmt.Sprintf("Field: %s", "Password"))
 	}
-	if err := validator.ValidateStringLength(name, 3, 50); err != nil {
-		return CreateAdminInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid name length", fmt.Sprintf("Field: %s", "Name"))
+
+	if err := validator.ValidateStringLength(input.Name, 3, 50); err != nil {
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid name length", fmt.Sprintf("Field: %s", "Name"))
 	}
-	return CreateAdminInput{
-		Password: password,
-		Name:     name,
-		Username: lowerCaseUsername,
-	}, nil
+	return nil
 }
 
 type AddGroupInput struct {
@@ -125,18 +117,17 @@ type AddGroupInput struct {
 	GroupName UserGroup
 }
 
-func NewAddGroupInput(username string, groupName UserGroup) (AddGroupInput, error) {
-	lowerCaseUsername := strings.ToLower(username)
-	if err := validator.ValidateEmail(lowerCaseUsername); err != nil {
-		return AddGroupInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Username"))
+func (input *AddGroupInput) Validate() error {
+	lowerCaseUsername, err := validateEmail(input.Username)
+	if err != nil {
+		return err
 	}
-	if groupName != Admin && groupName != User {
-		return AddGroupInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid user group", fmt.Sprintf("Field: %s", "GroupName"))
+	input.Username = lowerCaseUsername
+
+	if input.GroupName != Admin && input.GroupName != User {
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid user group", fmt.Sprintf("Field: %s", "GroupName"))
 	}
-	return AddGroupInput{
-		Username:  lowerCaseUsername,
-		GroupName: groupName,
-	}, nil
+	return nil
 }
 
 type RemoveGroupInput struct {
@@ -144,31 +135,28 @@ type RemoveGroupInput struct {
 	GroupName UserGroup
 }
 
-func NewRemoveGroupInput(username string, groupName UserGroup) (RemoveGroupInput, error) {
-	lowerCaseUsername := strings.ToLower(username)
-	if err := validator.ValidateEmail(lowerCaseUsername); err != nil {
-		return RemoveGroupInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Username"))
+func (input *RemoveGroupInput) Validate() error {
+	lowerCaseUsername, err := validateEmail(input.Username)
+	if err != nil {
+		return err
 	}
-	if groupName != Admin && groupName != User {
-		return RemoveGroupInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid user group", fmt.Sprintf("Field: %s", "GroupName"))
+	input.Username = lowerCaseUsername
+
+	if input.GroupName != Admin && input.GroupName != User {
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid user group", fmt.Sprintf("Field: %s", "GroupName"))
 	}
-	return RemoveGroupInput{
-		Username:  lowerCaseUsername,
-		GroupName: groupName,
-	}, nil
+	return nil
 }
 
 type AddMFAInput struct {
 	AccessToken string
 }
 
-func NewAddMFAInput(accessToken string) (AddMFAInput, error) {
-	if len(accessToken) == 0 {
-		return AddMFAInput{}, app_error.NewApiError(http.StatusBadRequest, "Access token is required", fmt.Sprintf("Field: %s", "AccessToken"))
+func (input *AddMFAInput) Validate() error {
+	if len(input.AccessToken) == 0 {
+		return app_error.NewApiError(http.StatusBadRequest, "Access token is required", fmt.Sprintf("Field: %s", "AccessToken"))
 	}
-	return AddMFAInput{
-		AccessToken: accessToken,
-	}, nil
+	return nil
 }
 
 type VerifyMFAInput struct {
@@ -177,63 +165,58 @@ type VerifyMFAInput struct {
 	Session  string
 }
 
-func NewVerifyMFAInput(code, username, session string) (VerifyMFAInput, error) {
-	if err := validator.ValidateNumeric(code); err != nil {
-		return VerifyMFAInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid code", fmt.Sprintf("Field: %s", "Code"))
+func (input *VerifyMFAInput) Validate() error {
+	if err := validator.ValidateNumeric(input.Code); err != nil {
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid code", fmt.Sprintf("Field: %s", "Code"))
 	}
-	lowerCaseUsername := strings.ToLower(username)
-	if err := validator.ValidateEmail(lowerCaseUsername); err != nil {
-		return VerifyMFAInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Username"))
+
+	lowerCaseUsername, err := validateEmail(input.Username)
+	if err != nil {
+		return err
 	}
-	if len(session) == 0 {
-		return VerifyMFAInput{}, app_error.NewApiError(http.StatusBadRequest, "Session is required", fmt.Sprintf("Field: %s", "Session"))
+	input.Username = lowerCaseUsername
+
+	if len(input.Session) == 0 {
+		return app_error.NewApiError(http.StatusBadRequest, "Session is required", fmt.Sprintf("Field: %s", "Session"))
 	}
-	return VerifyMFAInput{
-		Code:     code,
-		Username: lowerCaseUsername,
-		Session:  session,
-	}, nil
+	return nil
 }
 
 type AdminRemoveMFAInput struct {
 	Username string
 }
 
-func NewAdminRemoveMFAInput(username string) (AdminRemoveMFAInput, error) {
-	lowerCaseUsername := strings.ToLower(username)
-	if err := validator.ValidateEmail(lowerCaseUsername); err != nil {
-		return AdminRemoveMFAInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Username"))
+func (input *AdminRemoveMFAInput) Validate() error {
+	lowerCaseUsername, err := validateEmail(input.Username)
+	if err != nil {
+		return err
 	}
-	return AdminRemoveMFAInput{
-		Username: lowerCaseUsername,
-	}, nil
+	input.Username = lowerCaseUsername
+	return nil
 }
 
 type RemoveMFAInput struct {
 	AccessToken string
 }
 
-func NewRemoveMFAInput(accessToken string) (RemoveMFAInput, error) {
-	if len(accessToken) == 0 {
-		return RemoveMFAInput{}, app_error.NewApiError(http.StatusBadRequest, "Access token is required", fmt.Sprintf("Field: %s", "AccessToken"))
+func (input *RemoveMFAInput) Validate() error {
+	if len(input.AccessToken) == 0 {
+		return app_error.NewApiError(http.StatusBadRequest, "Access token is required", fmt.Sprintf("Field: %s", "AccessToken"))
 	}
-	return RemoveMFAInput{
-		AccessToken: accessToken,
-	}, nil
+	return nil
 }
 
 type DeleteUserInput struct {
 	Username string
 }
 
-func NewDeleteUserInput(username string) (DeleteUserInput, error) {
-	lowerCaseUsername := strings.ToLower(username)
-	if err := validator.ValidateEmail(lowerCaseUsername); err != nil {
-		return DeleteUserInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Username"))
+func (input *DeleteUserInput) Validate() error {
+	lowerCaseUsername, err := validateEmail(input.Username)
+	if err != nil {
+		return err
 	}
-	return DeleteUserInput{
-		Username: lowerCaseUsername,
-	}, nil
+	input.Username = lowerCaseUsername
+	return nil
 }
 
 type ActivateMFAInput struct {
@@ -241,30 +224,32 @@ type ActivateMFAInput struct {
 	Code        string
 }
 
-func NewActivateMFAInput(accessToken, code string) (ActivateMFAInput, error) {
-	if len(accessToken) == 0 {
-		return ActivateMFAInput{}, app_error.NewApiError(http.StatusBadRequest, "Access token is required", fmt.Sprintf("Field: %s", "AccessToken"))
+func (input *ActivateMFAInput) Validate() error {
+	if len(input.AccessToken) == 0 {
+		return app_error.NewApiError(http.StatusBadRequest, "Access token is required", fmt.Sprintf("Field: %s", "AccessToken"))
 	}
 
-	if err := validator.ValidateNumeric(code); err != nil {
-		return ActivateMFAInput{}, app_error.NewApiError(http.StatusBadRequest, "Invalid code", fmt.Sprintf("Field: %s", "Code"))
+	if err := validator.ValidateNumeric(input.Code); err != nil {
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid code", fmt.Sprintf("Field: %s", "Code"))
 	}
-
-	return ActivateMFAInput{
-		AccessToken: accessToken,
-		Code:        code,
-	}, nil
+	return nil
 }
 
 type LogoutInput struct {
 	AccessToken string
 }
 
-func NewLogoutInput(accessToken string) (LogoutInput, error) {
-	if len(accessToken) == 0 {
-		return LogoutInput{}, app_error.NewApiError(http.StatusBadRequest, "Access token is required", fmt.Sprintf("Field: %s", "AccessToken"))
+func (input *LogoutInput) Validate() error {
+	if len(input.AccessToken) == 0 {
+		return app_error.NewApiError(http.StatusBadRequest, "Access token is required", fmt.Sprintf("Field: %s", "AccessToken"))
 	}
-	return LogoutInput{
-		AccessToken: accessToken,
-	}, nil
+	return nil
+}
+
+func validateEmail(username string) (string, error) {
+	lowerCaseUsername := strings.ToLower(username)
+	if err := validator.ValidateEmail(lowerCaseUsername); err != nil {
+		return "", app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Username"))
+	}
+	return lowerCaseUsername, nil
 }

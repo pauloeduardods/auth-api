@@ -20,10 +20,9 @@ func NewRefreshTokenUseCase(auth auth.AuthService) *RefreshTokenUseCase {
 }
 
 func (uc *RefreshTokenUseCase) Execute(ctx context.Context, input RefreshTokenInput) (*auth.RefreshTokenOutput, error) {
-	refreshTokenInput, err := auth.NewRefreshTokenInput(input.RefreshToken)
-	if err != nil {
+	if err := input.RefreshTokenInput.Validate(); err != nil {
 		return nil, err
 	}
 
-	return uc.auth.RefreshToken(ctx, refreshTokenInput)
+	return uc.auth.RefreshToken(ctx, input.RefreshTokenInput)
 }

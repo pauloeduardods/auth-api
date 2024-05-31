@@ -20,10 +20,9 @@ func NewVerifyMFAUseCase(auth auth.AuthService) *VerifyMFAUseCase {
 }
 
 func (uc *VerifyMFAUseCase) Execute(ctx context.Context, input VerifyMFAInput) (*auth.LoginOutput, error) {
-	verifyMFAInput, err := auth.NewVerifyMFAInput(input.Code, input.Username, input.Session)
-	if err != nil {
+	if err := input.VerifyMFAInput.Validate(); err != nil {
 		return nil, err
 	}
 
-	return uc.auth.VerifyMFA(ctx, verifyMFAInput)
+	return uc.auth.VerifyMFA(ctx, input.VerifyMFAInput)
 }

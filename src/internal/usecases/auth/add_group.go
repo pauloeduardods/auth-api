@@ -20,10 +20,9 @@ func NewAddGroupUseCase(auth auth.AuthService) *AddGroupUseCase {
 }
 
 func (uc *AddGroupUseCase) Execute(ctx context.Context, input AddGroupInput) error {
-	addGroupInput, err := auth.NewAddGroupInput(input.Username, input.GroupName)
-	if err != nil {
+	if err := input.AddGroupInput.Validate(); err != nil {
 		return err
 	}
 
-	return uc.auth.AddGroup(ctx, addGroupInput)
+	return uc.auth.AddGroup(ctx, input.AddGroupInput)
 }

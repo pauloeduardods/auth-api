@@ -20,10 +20,9 @@ func NewAdminRemoveMFAUseCase(auth auth.AuthService) *AdminRemoveMFAUseCase {
 }
 
 func (uc *AdminRemoveMFAUseCase) Execute(ctx context.Context, input AdminRemoveMFAInput) error {
-	removeMFAInput, err := auth.NewAdminRemoveMFAInput(input.Username)
-	if err != nil {
+	if err := input.AdminRemoveMFAInput.Validate(); err != nil {
 		return err
 	}
 
-	return uc.auth.AdminRemoveMFA(ctx, removeMFAInput)
+	return uc.auth.AdminRemoveMFA(ctx, input.AdminRemoveMFAInput)
 }
