@@ -19,9 +19,9 @@ func NewSetPasswordUseCase(auth auth.AuthService) *SetPasswordUseCase {
 	}
 }
 
-func (uc *SetPasswordUseCase) Execute(ctx context.Context, input SetPasswordInput) error {
+func (uc *SetPasswordUseCase) Execute(ctx context.Context, input SetPasswordInput) (*auth.LoginOutput, error) {
 	if err := input.SetPasswordInput.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 
 	return uc.auth.SetPassword(ctx, input.SetPasswordInput)

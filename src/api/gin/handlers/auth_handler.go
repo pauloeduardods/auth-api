@@ -201,15 +201,15 @@ type setPasswordInput struct {
 
 func (h *AuthHandler) SetPassword() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		processRequestNoOutput(c, setPasswordInput{}, func(ctx context.Context, input setPasswordInput) error {
-			err := h.useCases.SetPassword.Execute(ctx, auth_usecases.SetPasswordInput{
+		processRequest(c, setPasswordInput{}, func(ctx context.Context, input setPasswordInput) (*auth.LoginOutput, error) {
+			out, err := h.useCases.SetPassword.Execute(ctx, auth_usecases.SetPasswordInput{
 				SetPasswordInput: auth.SetPasswordInput{
 					Username: input.Email,
 					Password: input.Password,
 					Session:  input.Session,
 				},
 			})
-			return err
+			return out, err
 		})
 	}
 }

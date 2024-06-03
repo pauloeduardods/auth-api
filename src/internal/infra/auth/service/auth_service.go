@@ -575,9 +575,9 @@ func (c *cognitoClient) Logout(ctx context.Context, input auth.LogoutInput) erro
 	return nil
 }
 
-func (c *cognitoClient) SetPassword(ctx context.Context, input auth.SetPasswordInput) error { //TODO: add tokens
+func (c *cognitoClient) SetPassword(ctx context.Context, input auth.SetPasswordInput) (o *auth.LoginOutput, execErr error) {
 	if err := input.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -593,17 +593,21 @@ func (c *cognitoClient) SetPassword(ctx context.Context, input auth.SetPasswordI
 		Session: aws.String(input.Session),
 	}
 
-	_, err := c.client.RespondToAuthChallenge(ctx, respondToAuthChallengeInput)
+	authOut, err := c.client.RespondToAuthChallenge(ctx, respondToAuthChallengeInput)
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "UserNotFoundException") {
-			return auth.ErrUserNotFound
+			return nil, auth.ErrUserNotFound
 		}
 		c.logger.Error("Cognito set password error", err)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &auth.LoginOutput{
+		AccessToken:  authOut.AuthenticationResult.AccessToken,
+		RefreshToken: authOut.AuthenticationResult.RefreshToken,
+		IdToken:      authOut.AuthenticationResult.IdToken,
+	}, nil
 }
 
 func (c *cognitoClient) GetUser(ctx context.Context, input auth.GetUserInput) (*auth.GetUserOutput, error) {
