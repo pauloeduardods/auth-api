@@ -5,7 +5,6 @@ import (
 	"auth-api/src/internal/domain/user"
 	"auth-api/src/pkg/logger"
 	"context"
-	"errors"
 )
 
 type RegisterUserUseCase struct {
@@ -81,5 +80,5 @@ func (uc *RegisterUserUseCase) Execute(ctx context.Context, input RegisterUserIn
 		}
 	}()
 
-	return errors.New("not implemented")
+	return nil
 }

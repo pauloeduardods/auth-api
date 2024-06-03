@@ -125,9 +125,9 @@ func (c *cognitoClient) VerifyMFA(ctx context.Context, input auth.VerifyMFAInput
 	}
 
 	return &auth.LoginOutput{
-		AccessToken:  *cognitoOut.AuthenticationResult.AccessToken,
-		RefreshToken: *cognitoOut.AuthenticationResult.RefreshToken,
-		IdToken:      *cognitoOut.AuthenticationResult.IdToken,
+		AccessToken:  cognitoOut.AuthenticationResult.AccessToken,
+		RefreshToken: cognitoOut.AuthenticationResult.RefreshToken,
+		IdToken:      cognitoOut.AuthenticationResult.IdToken,
 	}, nil
 }
 
@@ -214,16 +214,20 @@ func (c *cognitoClient) Login(ctx context.Context, input auth.LoginInput) (*auth
 		return nil, err
 	}
 
+	if cognitoOut.ChallengeName == "NEW_PASSWORD_REQUIRED" {
+		return nil, app_error.NewApiError(401, "New password required")
+	}
+
 	if cognitoOut.ChallengeName == "SOFTWARE_TOKEN_MFA" {
 		return &auth.LoginOutput{
-			Session: *cognitoOut.Session,
+			Session: cognitoOut.Session,
 		}, nil
 	}
 
 	out := &auth.LoginOutput{
-		AccessToken:  *cognitoOut.AuthenticationResult.AccessToken,
-		RefreshToken: *cognitoOut.AuthenticationResult.RefreshToken,
-		IdToken:      *cognitoOut.AuthenticationResult.IdToken,
+		AccessToken:  cognitoOut.AuthenticationResult.AccessToken,
+		RefreshToken: cognitoOut.AuthenticationResult.RefreshToken,
+		IdToken:      cognitoOut.AuthenticationResult.IdToken,
 	}
 
 	return out, nil

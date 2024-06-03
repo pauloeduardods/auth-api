@@ -20,7 +20,7 @@ func NewUserHandler(useCases *user_usecases.UseCases) *UserHandler {
 	}
 }
 
-type registerInput struct {
+type registerUserInput struct {
 	Email    string  `json:"email"`
 	Password string  `json:"password"`
 	Name     string  `json:"name"`
@@ -29,7 +29,7 @@ type registerInput struct {
 
 func (h *UserHandler) Register() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		processRequestNoOutput(c, registerInput{}, func(ctx context.Context, input registerInput) error {
+		processRequestNoOutput(c, registerUserInput{}, func(ctx context.Context, input registerUserInput) error {
 			err := h.useCases.Register.Execute(ctx, user_usecases.RegisterUserInput{
 				SignUpInput: auth.SignUpInput{
 					Username: input.Email,

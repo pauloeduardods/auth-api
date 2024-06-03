@@ -6,10 +6,10 @@ import (
 )
 
 type LoginOutput struct {
-	AccessToken  string `json:"accessToken,omitempty"`
-	IdToken      string `json:"idToken,omitempty"`
-	RefreshToken string `json:"refreshToken,omitempty"`
-	Session      string `json:"session,omitempty"`
+	AccessToken  *string `json:"accessToken,omitempty"`
+	IdToken      *string `json:"idToken,omitempty"`
+	RefreshToken *string `json:"refreshToken,omitempty"`
+	Session      *string `json:"session,omitempty"`
 }
 
 type SignUpOutput struct {
