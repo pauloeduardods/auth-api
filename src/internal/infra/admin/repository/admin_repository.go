@@ -24,8 +24,8 @@ func (r *AdminRepository) GetByID(input *admin.GetAdminInput) (*admin.Admin, err
 	}
 
 	var adm admin.Admin
-	query := `SELECT id, name, email, status FROM admins WHERE id = $1`
-	if err := r.db.QueryRow(query, input.ID).Scan(&adm.ID, &adm.Name, &adm.Email, &adm.Status); err != nil {
+	query := `SELECT id, name, email FROM admins WHERE id = $1`
+	if err := r.db.QueryRow(query, input.ID).Scan(&adm.ID, &adm.Name, &adm.Email); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, admin.ErrAdminNotFound
 		}
@@ -41,8 +41,8 @@ func (r *AdminRepository) GetByEmail(input *admin.GetAdminByEmailInput) (*admin.
 	}
 
 	var adm admin.Admin
-	query := `SELECT id, name, email, status FROM admins WHERE email = $1`
-	if err := r.db.QueryRow(query, input.Email).Scan(&adm.ID, &adm.Name, &adm.Email, &adm.Status); err != nil {
+	query := `SELECT id, name, email FROM admins WHERE email = $1`
+	if err := r.db.QueryRow(query, input.Email).Scan(&adm.ID, &adm.Name, &adm.Email); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, admin.ErrAdminNotFound
 		}
@@ -57,8 +57,8 @@ func (r *AdminRepository) Create(input *admin.CreateAdminInput) error {
 		return err
 	}
 
-	query := `INSERT INTO admins (id, name, email, status) VALUES ($1, $2, $3, $4)`
-	if _, err := r.db.Exec(query, input.ID.String(), input.Name, input.Email, input.Status); err != nil {
+	query := `INSERT INTO admins (id, name, email) VALUES ($1, $2, $3)`
+	if _, err := r.db.Exec(query, input.ID.String(), input.Name, input.Email); err != nil {
 		r.logger.Error("Error creating admin: %v", err)
 		return err
 	}

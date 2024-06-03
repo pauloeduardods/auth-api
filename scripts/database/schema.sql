@@ -5,11 +5,8 @@ CREATE TABLE IF NOT EXISTS users (
     phone VARCHAR(15)
 );
 
-CREATE TYPE admin_status AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
-
 CREATE TABLE IF NOT EXISTS admins (
     id VARCHAR(36) PRIMARY KEY,
     email VARCHAR(100) UNIQUE NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    status admin_status NOT NULL
+    name VARCHAR(100) NOT NULL
 );

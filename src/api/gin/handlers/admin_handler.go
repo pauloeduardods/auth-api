@@ -36,9 +36,8 @@ func (h *AdminHandler) Register() gin.HandlerFunc {
 					Name:     input.Name,
 				},
 				CreateAdminInput: admin.CreateAdminInput{
-					Status: admin.AdminStatusInactive,
-					Name:   input.Name,
-					Email:  input.Email,
+					Name:  input.Name,
+					Email: input.Email,
 				},
 			})
 			return err

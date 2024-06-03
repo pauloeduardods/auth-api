@@ -3,7 +3,6 @@ package admin_service
 import (
 	"auth-api/src/internal/domain/admin"
 	"auth-api/src/pkg/logger"
-	"context"
 )
 
 type AdminService struct {
@@ -114,40 +113,4 @@ func (a *AdminService) Delete(id *admin.DeleteAdminInput) (*admin.DeleteAdminOut
 
 	return out, nil
 
-}
-
-func (a *AdminService) ChangeStatus(ctx context.Context, input *admin.ChangeStatusAdminInput) (o *admin.ChangeStatusAdminOutput, execErr error) {
-	if err := input.Validate(); err != nil {
-		return nil, err
-	}
-
-	getAdminInput := admin.GetAdminInput{ID: input.ID.String()}
-	if err := getAdminInput.Validate(); err != nil {
-		return nil, err
-	}
-
-	adminOut, err := a.repo.GetByID(&getAdminInput)
-	if err != nil {
-		return nil, err
-	}
-	if adminOut == nil {
-		return nil, admin.ErrAdminNotFound
-	}
-
-	if input.Status == adminOut.Status {
-		return nil, admin.ErrAdminStatusNotChanged
-	}
-
-	if adminOut.Status == admin.AdminStatusDeleted {
-		return nil, admin.ErrAdminDeleted
-	}
-
-	updateInput := &admin.UpdateAdminInput{ID: input.ID, Status: &input.Status}
-
-	if err := a.repo.Update(updateInput); err != nil {
-		return nil, err
-	}
-	out := admin.NewChangeStatusAdminOutput(&adminOut.Status, adminOut.ID, a)
-
-	return out, nil
 }

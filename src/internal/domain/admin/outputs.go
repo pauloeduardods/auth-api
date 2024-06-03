@@ -95,38 +95,3 @@ func (d *DeleteAdminOutput) Rollback(ctx context.Context) error {
 	}
 	return nil
 }
-
-type ChangeStatusAdminOutput struct {
-	oldStatus *AdminStatus
-	id        AdminID
-	svc       AdminService
-}
-
-func NewChangeStatusAdminOutput(oldStatus *AdminStatus, adminId AdminID, svc AdminService) *ChangeStatusAdminOutput {
-	return &ChangeStatusAdminOutput{
-		oldStatus: oldStatus,
-		id:        adminId,
-		svc:       svc,
-	}
-}
-
-func (c *ChangeStatusAdminOutput) Rollback(ctx context.Context) error {
-	if c.oldStatus == nil {
-		return nil
-	}
-
-	updateAdminInput := &UpdateAdminInput{
-		ID:     c.id,
-		Status: c.oldStatus,
-	}
-
-	if err := updateAdminInput.Validate(); err != nil {
-		return err
-	}
-
-	_, err := c.svc.Update(updateAdminInput)
-	if err != nil {
-		return err
-	}
-	return nil
-}

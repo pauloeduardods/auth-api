@@ -9,10 +9,9 @@ import (
 )
 
 type CreateAdminInput struct {
-	ID     AdminID
-	Name   string
-	Email  string
-	Status AdminStatus
+	ID    AdminID
+	Name  string
+	Email string
 }
 
 func (input *CreateAdminInput) Validate() error {
@@ -32,18 +31,13 @@ func (input *CreateAdminInput) Validate() error {
 		return app_error.NewApiError(http.StatusBadRequest, "Invalid name length", fmt.Sprintf("Field: %s", "Name"))
 	}
 
-	if input.Status != AdminStatusActive && input.Status != AdminStatusInactive && input.Status != AdminStatusDeleted { //TODO: handle this better
-		return app_error.NewApiError(http.StatusBadRequest, "Invalid status", fmt.Sprintf("Field: %s", "Status"))
-	}
-
 	return nil
 }
 
 type UpdateAdminInput struct {
-	ID     AdminID
-	Name   *string
-	Email  *string
-	Status *AdminStatus
+	ID    AdminID
+	Name  *string
+	Email *string
 }
 
 func (input *UpdateAdminInput) Validate() error {
@@ -65,10 +59,6 @@ func (input *UpdateAdminInput) Validate() error {
 		if err := validator.ValidateStringLength(*input.Name, 3, 100); err != nil {
 			return app_error.NewApiError(http.StatusBadRequest, "Invalid name length", fmt.Sprintf("Field: %s", "Name"))
 		}
-	}
-
-	if input.Status != nil && *input.Status != AdminStatusActive && *input.Status != AdminStatusInactive && *input.Status != AdminStatusDeleted { //TODO: handle this better
-		return app_error.NewApiError(http.StatusBadRequest, "Invalid status", fmt.Sprintf("Field: %s", "Status"))
 	}
 
 	return nil
@@ -118,23 +108,4 @@ func validateEmail(email string) (string, error) {
 		return "", app_error.NewApiError(http.StatusBadRequest, "Invalid email format", fmt.Sprintf("Field: %s", "Email"))
 	}
 	return lowerCaseEmail, nil
-}
-
-type ChangeStatusAdminInput struct {
-	ID     AdminID
-	Status AdminStatus
-}
-
-func (input *ChangeStatusAdminInput) Validate() error {
-	adminID, err := ParseAdminID(input.ID.String())
-	if err != nil {
-		return app_error.NewApiError(http.StatusBadRequest, "Invalid admin ID", fmt.Sprintf("Field: %s", "ID"))
-	}
-	input.ID = adminID
-
-	if input.Status != AdminStatusActive && input.Status != AdminStatusInactive && input.Status != AdminStatusDeleted { //TODO: handle this better
-		return app_error.NewApiError(http.StatusBadRequest, "Invalid status", fmt.Sprintf("Field: %s", "Status"))
-	}
-
-	return nil
 }

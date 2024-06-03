@@ -11,14 +11,6 @@ import (
 
 type AdminID uuid.UUID
 
-type AdminStatus string
-
-const (
-	AdminStatusActive   AdminStatus = "ACTIVE"
-	AdminStatusInactive AdminStatus = "INACTIVE"
-	AdminStatusDeleted  AdminStatus = "DELETED"
-)
-
 func ParseAdminID(id string) (AdminID, error) {
 	parsedID, err := uuid.Parse(id)
 	if err == nil {
@@ -32,10 +24,9 @@ func (id AdminID) String() string {
 }
 
 type Admin struct {
-	ID     AdminID     `json:"id"`
-	Name   string      `json:"name"`
-	Email  string      `json:"email"`
-	Status AdminStatus `json:"status"`
+	ID    AdminID `json:"id"`
+	Name  string  `json:"name"`
+	Email string  `json:"email"`
 }
 
 func (id *AdminID) Scan(value interface{}) error {
