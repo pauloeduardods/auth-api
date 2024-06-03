@@ -575,7 +575,7 @@ func (c *cognitoClient) Logout(ctx context.Context, input auth.LogoutInput) erro
 	return nil
 }
 
-func (c *cognitoClient) SetPassword(ctx context.Context, input auth.SetPasswordInput) error {
+func (c *cognitoClient) SetPassword(ctx context.Context, input auth.SetPasswordInput) error { //TODO: add tokens
 	if err := input.Validate(); err != nil {
 		return err
 	}
@@ -600,6 +600,77 @@ func (c *cognitoClient) SetPassword(ctx context.Context, input auth.SetPasswordI
 			return auth.ErrUserNotFound
 		}
 		c.logger.Error("Cognito set password error", err)
+		return err
+	}
+
+	return nil
+}
+
+func (c *cognitoClient) GetUser(ctx context.Context, input auth.GetUserInput) (*auth.GetUserOutput, error) {
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	getUserInput := &cognito.AdminGetUserInput{
+		UserPoolId: aws.String(c.userPoolId),
+		Username:   aws.String(input.Username),
+	}
+
+	cognitoOut, err := c.client.AdminGetUser(ctx, getUserInput)
+	if err != nil {
+		errorType := err.Error()
+		if strings.Contains(errorType, "UserNotFoundException") {
+			return nil, auth.ErrUserNotFound
+		}
+		c.logger.Error("Cognito get user error", err)
+		return nil, err
+	}
+
+	var username, name, id string
+
+	for _, attr := range cognitoOut.UserAttributes {
+		switch *attr.Name {
+		case "email":
+			username = *attr.Value
+		case "name":
+			name = *attr.Value
+		case "sub":
+			id = *attr.Value
+		}
+	}
+
+	out := &auth.GetUserOutput{
+		Username: username,
+		Name:     name,
+		Id:       id,
+	}
+
+	return out, nil
+}
+
+func (c *cognitoClient) AdminLogout(ctx context.Context, input auth.AdminLogoutInput) error {
+	if err := input.Validate(); err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	adminUserGlobalSignOutInput := &cognito.AdminUserGlobalSignOutInput{
+		UserPoolId: aws.String(c.userPoolId),
+		Username:   aws.String(input.Username),
+	}
+
+	_, err := c.client.AdminUserGlobalSignOut(ctx, adminUserGlobalSignOutInput)
+	if err != nil {
+		errorType := err.Error()
+		if strings.Contains(errorType, "UserNotFoundException") {
+			return auth.ErrUserNotFound
+		}
+		c.logger.Error("Cognito admin logout error", err)
 		return err
 	}
 

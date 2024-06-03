@@ -52,8 +52,8 @@ func newAuthService(logger logger.Logger, awsConfig *aws.Config, config config.C
 	return auth_service.NewAuthService(cognitoClient, config.Aws.CognitoClientId, jwtVerify, config.Aws.CognitoUserPoolID, logger)
 }
 
-func newAuthUseCases(auth auth.AuthService) *auth_usecases.UseCases {
-	return auth_usecases.NewUseCases(auth)
+func newAuthUseCases(auth auth.AuthService, user user.UserService, admin admin.AdminService, logger logger.Logger) *auth_usecases.UseCases {
+	return auth_usecases.NewUseCases(auth, admin, user, logger)
 }
 
 func newUserRepo(db *sql.DB, logger logger.Logger) user.UserRepository {
@@ -81,16 +81,16 @@ func newAdminUseCases(adminService admin.AdminService, authService auth.AuthServ
 }
 
 func New(ctx context.Context, logger logger.Logger, awsConfig aws.Config, config config.Config, db *sql.DB) (*Factory, error) {
-	authService := newAuthService(logger, &awsConfig, config)
-	authUseCases := newAuthUseCases(authService)
-
 	userRepo := newUserRepo(db, logger)
-	userService := newUserService(userRepo)
-	userUseCases := newUserUseCases(userService, authService, logger)
-
 	adminRepo := newAdminRepo(db, logger)
+
+	authService := newAuthService(logger, &awsConfig, config)
+	userService := newUserService(userRepo)
 	adminService := newAdminService(adminRepo, logger)
+
+	authUseCases := newAuthUseCases(authService, userService, adminService, logger)
 	adminUseCases := newAdminUseCases(adminService, authService, logger)
+	userUseCases := newUserUseCases(userService, authService, logger)
 
 	return &Factory{
 		Repository: Repository{

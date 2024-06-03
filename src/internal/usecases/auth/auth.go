@@ -1,7 +1,10 @@
 package auth_usecases
 
 import (
+	"auth-api/src/internal/domain/admin"
 	"auth-api/src/internal/domain/auth"
+	"auth-api/src/internal/domain/user"
+	"auth-api/src/pkg/logger"
 )
 
 type UseCases struct {
@@ -20,11 +23,11 @@ type UseCases struct {
 	SetPassword    *SetPasswordUseCase
 }
 
-func NewUseCases(authService auth.AuthService) *UseCases {
+func NewUseCases(authService auth.AuthService, adminService admin.AdminService, userService user.UserService, logger logger.Logger) *UseCases {
 	return &UseCases{
 		Login:          NewLoginUseCase(authService),
-		AddGroup:       NewAddGroupUseCase(authService),
-		RemoveGroup:    NewRemoveGroupUseCase(authService),
+		AddGroup:       NewAddGroupUseCase(adminService, userService, authService, logger),
+		RemoveGroup:    NewRemoveGroupUseCase(authService, logger),
 		RefreshToken:   NewRefreshTokenUseCase(authService),
 		AddMFA:         NewAddMFAUseCase(authService),
 		VerifyMFA:      NewVerifyMFAUseCase(authService),

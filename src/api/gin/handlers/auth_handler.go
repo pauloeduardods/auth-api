@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"auth-api/src/internal/domain/admin"
 	"auth-api/src/internal/domain/auth"
+	"auth-api/src/internal/domain/user"
 	auth_usecases "auth-api/src/internal/usecases/auth"
 	"context"
 
@@ -205,6 +207,64 @@ func (h *AuthHandler) SetPassword() gin.HandlerFunc {
 					Username: input.Email,
 					Password: input.Password,
 					Session:  input.Session,
+				},
+			})
+			return err
+		})
+	}
+}
+
+type addGroupInput struct {
+	Email string         `json:"email"`
+	Name  *string        `json:"name"`
+	Phone *string        `json:"phone"`
+	Group auth.UserGroup `json:"group"`
+}
+
+func (h *AuthHandler) AddGroup() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		processRequestNoOutput(c, addGroupInput{}, func(ctx context.Context, input addGroupInput) error {
+			var adminName, userName, userPhone string
+			if input.Name != nil {
+				adminName = *input.Name
+				userName = *input.Name
+			}
+			if input.Phone != nil {
+				userPhone = *input.Phone
+			}
+
+			err := h.useCases.AddGroup.Execute(ctx, auth_usecases.AddGroupInput{
+				AddGroupInput: auth.AddGroupInput{
+					Username:  input.Email,
+					GroupName: input.Group,
+				},
+				CreateAdminInput: &admin.CreateAdminInput{
+					Email: input.Email,
+					Name:  adminName,
+				},
+				CreateUserInput: &user.CreateUserInput{
+					Email: input.Email,
+					Name:  userName,
+					Phone: &userPhone,
+				},
+			})
+			return err
+		})
+	}
+}
+
+type removeGroupInput struct {
+	Email string         `json:"email"`
+	Group auth.UserGroup `json:"group"`
+}
+
+func (h *AuthHandler) RemoveGroup() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		processRequestNoOutput(c, removeGroupInput{}, func(ctx context.Context, input removeGroupInput) error {
+			err := h.useCases.RemoveGroup.Execute(ctx, auth_usecases.RemoveGroupInput{
+				RemoveGroupInput: auth.RemoveGroupInput{
+					Username:  input.Email,
+					GroupName: input.Group,
 				},
 			})
 			return err

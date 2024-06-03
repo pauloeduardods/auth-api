@@ -277,3 +277,29 @@ func (input *SetPasswordInput) Validate() error {
 
 	return nil
 }
+
+type GetUserInput struct {
+	Username string
+}
+
+func (input *GetUserInput) Validate() error {
+	lowerCaseUsername, err := validateEmail(input.Username)
+	if err != nil {
+		return err
+	}
+	input.Username = lowerCaseUsername
+	return nil
+}
+
+type AdminLogoutInput struct {
+	Username string
+}
+
+func (input *AdminLogoutInput) Validate() error {
+	lowerCaseUsername, err := validateEmail(input.Username)
+	if err != nil {
+		return err
+	}
+	input.Username = lowerCaseUsername
+	return nil
+}
