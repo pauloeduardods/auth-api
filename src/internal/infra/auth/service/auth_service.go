@@ -214,14 +214,15 @@ func (c *cognitoClient) Login(ctx context.Context, input auth.LoginInput) (*auth
 		return nil, err
 	}
 
-	if cognitoOut.ChallengeName == "NEW_PASSWORD_REQUIRED" {
-		return nil, app_error.NewApiError(401, "New password required")
+	if cognitoOut.ChallengeName != "" {
+		return &auth.LoginOutput{
+			Session:  cognitoOut.Session,
+			NextStep: (*string)(&cognitoOut.ChallengeName),
+		}, nil
 	}
 
-	if cognitoOut.ChallengeName == "SOFTWARE_TOKEN_MFA" {
-		return &auth.LoginOutput{
-			Session: cognitoOut.Session,
-		}, nil
+	if cognitoOut.AuthenticationResult == nil {
+		return nil, app_error.NewApiError(500, "Failed to get authentication result")
 	}
 
 	out := &auth.LoginOutput{
@@ -568,6 +569,37 @@ func (c *cognitoClient) Logout(ctx context.Context, input auth.LogoutInput) erro
 			return app_error.NewApiError(401, "Invalid access token")
 		}
 		c.logger.Error("Cognito logout error", err)
+		return err
+	}
+
+	return nil
+}
+
+func (c *cognitoClient) SetPassword(ctx context.Context, input auth.SetPasswordInput) error {
+	if err := input.Validate(); err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	respondToAuthChallengeInput := &cognito.RespondToAuthChallengeInput{
+		ChallengeName: "NEW_PASSWORD_REQUIRED",
+		ClientId:      aws.String(c.clientId),
+		ChallengeResponses: map[string]string{
+			"USERNAME":     input.Username,
+			"NEW_PASSWORD": input.Password,
+		},
+		Session: aws.String(input.Session),
+	}
+
+	_, err := c.client.RespondToAuthChallenge(ctx, respondToAuthChallengeInput)
+	if err != nil {
+		errorType := err.Error()
+		if strings.Contains(errorType, "UserNotFoundException") {
+			return auth.ErrUserNotFound
+		}
+		c.logger.Error("Cognito set password error", err)
 		return err
 	}
 

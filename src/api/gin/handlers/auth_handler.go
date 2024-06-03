@@ -190,3 +190,24 @@ func (h *AuthHandler) Logout() gin.HandlerFunc {
 		})
 	}
 }
+
+type setPasswordInput struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Session  string `json:"session"`
+}
+
+func (h *AuthHandler) SetPassword() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		processRequestNoOutput(c, setPasswordInput{}, func(ctx context.Context, input setPasswordInput) error {
+			err := h.useCases.SetPassword.Execute(ctx, auth_usecases.SetPasswordInput{
+				SetPasswordInput: auth.SetPasswordInput{
+					Username: input.Email,
+					Password: input.Password,
+					Session:  input.Session,
+				},
+			})
+			return err
+		})
+	}
+}

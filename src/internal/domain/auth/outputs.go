@@ -10,6 +10,7 @@ type LoginOutput struct {
 	IdToken      *string `json:"idToken,omitempty"`
 	RefreshToken *string `json:"refreshToken,omitempty"`
 	Session      *string `json:"session,omitempty"`
+	NextStep     *string `json:"nextStep,omitempty"`
 }
 
 type SignUpOutput struct {

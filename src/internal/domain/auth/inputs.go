@@ -253,3 +253,27 @@ func validateEmail(username string) (string, error) {
 	}
 	return lowerCaseUsername, nil
 }
+
+type SetPasswordInput struct {
+	Username string
+	Password string
+	Session  string
+}
+
+func (input *SetPasswordInput) Validate() error {
+	lowerCaseUsername, err := validateEmail(input.Username)
+	if err != nil {
+		return err
+	}
+	input.Username = lowerCaseUsername
+
+	if err := validator.ValidatePassword(input.Password); err != nil {
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid password", fmt.Sprintf("Field: %s", "Password"))
+	}
+
+	if len(input.Session) == 0 {
+		return app_error.NewApiError(http.StatusBadRequest, "Session is required", fmt.Sprintf("Field: %s", "Session"))
+	}
+
+	return nil
+}

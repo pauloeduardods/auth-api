@@ -26,4 +26,5 @@ type AuthService interface {
 	AdminRemoveMFA(ctx context.Context, input AdminRemoveMFAInput) error
 	RemoveMFA(ctx context.Context, input RemoveMFAInput) error
 	Logout(ctx context.Context, input LogoutInput) error
+	SetPassword(ctx context.Context, input SetPasswordInput) error
 }

@@ -16,6 +16,7 @@ func (r *routes) configAuthRoutes() {
 	authGroup.POST("/logout", handler.Logout())
 	authGroup.POST("/refresh", handler.RefreshToken())
 	authGroup.POST("/confirm", handler.ConfirmSignUp())
+	authGroup.POST("/set-password", handler.SetPassword())
 
 	mfaGroup := authGroup.Group("/mfa")
 	mfaGroup.POST("/", handler.AddMfa())
@@ -27,9 +28,4 @@ func (r *routes) configAuthRoutes() {
 	authenticatedGroup := authGroup.Group("/")
 	authenticatedGroup.Use(r.authMiddleware.AuthMiddleware(auth.Admin, auth.User))
 	authenticatedGroup.GET("/", handler.GetMe())
-
-	// adminGroup := authGroup.Group("/admin")
-	// adminGroup.Use(r.authMiddleware.AuthMiddleware(auth.Admin))
-	// adminGroup.POST("/register", handler.CreateAdmin())
-
 }
