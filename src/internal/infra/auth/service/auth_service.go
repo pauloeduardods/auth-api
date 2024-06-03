@@ -34,6 +34,10 @@ func NewAuthService(cognito *cognito.Client, clientId string, jwtVerify jwt_veri
 }
 
 func (c *cognitoClient) AddMFA(ctx context.Context, input auth.AddMFAInput) (*auth.AddMFAOutput, error) {
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -54,6 +58,10 @@ func (c *cognitoClient) AddMFA(ctx context.Context, input auth.AddMFAInput) (*au
 }
 
 func (c *cognitoClient) ActivateMFA(ctx context.Context, input auth.ActivateMFAInput) error {
+	if err := input.Validate(); err != nil {
+		return err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -96,6 +104,10 @@ func (c *cognitoClient) ActivateMFA(ctx context.Context, input auth.ActivateMFAI
 }
 
 func (c *cognitoClient) VerifyMFA(ctx context.Context, input auth.VerifyMFAInput) (*auth.LoginOutput, error) {
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+
 	respondToAuthChallengeInput := &cognito.RespondToAuthChallengeInput{
 		ChallengeName: "SOFTWARE_TOKEN_MFA",
 		ClientId:      aws.String(c.clientId),
@@ -120,6 +132,10 @@ func (c *cognitoClient) VerifyMFA(ctx context.Context, input auth.VerifyMFAInput
 }
 
 func (c *cognitoClient) AdminRemoveMFA(ctx context.Context, input auth.AdminRemoveMFAInput) error {
+	if err := input.Validate(); err != nil {
+		return err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -142,6 +158,10 @@ func (c *cognitoClient) AdminRemoveMFA(ctx context.Context, input auth.AdminRemo
 }
 
 func (c *cognitoClient) RemoveMFA(ctx context.Context, input auth.RemoveMFAInput) error {
+	if err := input.Validate(); err != nil {
+		return err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -163,6 +183,10 @@ func (c *cognitoClient) RemoveMFA(ctx context.Context, input auth.RemoveMFAInput
 }
 
 func (c *cognitoClient) Login(ctx context.Context, input auth.LoginInput) (*auth.LoginOutput, error) {
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -205,7 +229,11 @@ func (c *cognitoClient) Login(ctx context.Context, input auth.LoginInput) (*auth
 	return out, nil
 }
 
-func (c *cognitoClient) SignUp(ctx context.Context, input auth.SignUpInput) (out *auth.SignUpOutput, execErr error) {
+func (c *cognitoClient) SignUp(ctx context.Context, input auth.SignUpInput) (o *auth.SignUpOutput, execErr error) {
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
@@ -234,15 +262,12 @@ func (c *cognitoClient) SignUp(ctx context.Context, input auth.SignUpInput) (out
 		return nil, err
 	}
 
-	out = &auth.SignUpOutput{
-		IsConfirmed: cognitoOut.UserConfirmed,
-		Id:          *cognitoOut.UserSub,
-		Username:    input.Username,
-	}
+	out := auth.NewSignUpOutput(*cognitoOut.UserSub, input.Username, false, c)
+
 	defer func() {
 		if execErr != nil {
 			c.logger.Info("Rollback signup")
-			if err := out.Rollback(ctx, c); err != nil {
+			if err := out.Rollback(ctx); err != nil {
 				c.logger.Error("Rollback signup error", err)
 			}
 		}
@@ -260,6 +285,10 @@ func (c *cognitoClient) SignUp(ctx context.Context, input auth.SignUpInput) (out
 }
 
 func (c *cognitoClient) ConfirmSignUp(ctx context.Context, input auth.ConfirmSignUpInput) (*auth.ConfirmSignUpOutput, error) {
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -286,6 +315,10 @@ func (c *cognitoClient) ConfirmSignUp(ctx context.Context, input auth.ConfirmSig
 }
 
 func (c *cognitoClient) GetMe(ctx context.Context, input auth.GetMeInput) (*auth.GetMeOutput, error) {
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -314,6 +347,7 @@ func (c *cognitoClient) GetMe(ctx context.Context, input auth.GetMeInput) (*auth
 }
 
 func (c *cognitoClient) ValidateToken(ctx context.Context, token string) (*auth.Claims, error) {
+
 	_, claims, err := c.jwtVerify.ParseJWT(token)
 	if err != nil {
 		return nil, err
@@ -353,6 +387,10 @@ func (c *cognitoClient) AddGroup(ctx context.Context, input auth.AddGroupInput) 
 }
 
 func (c *cognitoClient) RemoveGroup(ctx context.Context, input auth.RemoveGroupInput) error {
+	if err := input.Validate(); err != nil {
+		return err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -379,6 +417,10 @@ func (c *cognitoClient) RemoveGroup(ctx context.Context, input auth.RemoveGroupI
 }
 
 func (c *cognitoClient) RefreshToken(ctx context.Context, input auth.RefreshTokenInput) (*auth.RefreshTokenOutput, error) {
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -407,7 +449,11 @@ func (c *cognitoClient) RefreshToken(ctx context.Context, input auth.RefreshToke
 	return out, nil
 }
 
-func (c *cognitoClient) CreateAdmin(ctx context.Context, input auth.CreateAdminInput) (out *auth.CreateAdminOutput, execErr error) {
+func (c *cognitoClient) CreateAdmin(ctx context.Context, input auth.CreateAdminInput) (o *auth.CreateAdminOutput, execErr error) {
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
@@ -449,13 +495,10 @@ func (c *cognitoClient) CreateAdmin(ctx context.Context, input auth.CreateAdminI
 		}
 	}
 
-	out = &auth.CreateAdminOutput{
-		Id:       userId,
-		Username: input.Username,
-	}
+	out := auth.NewCreateAdminOutput(userId, input.Username, c)
 	defer func() {
 		if execErr != nil {
-			if err := out.Rollback(ctx, c); err != nil {
+			if err := out.Rollback(ctx); err != nil {
 				c.logger.Error("Rollback create admin error", err)
 			}
 		}
@@ -477,6 +520,10 @@ func (c *cognitoClient) CreateAdmin(ctx context.Context, input auth.CreateAdminI
 }
 
 func (c *cognitoClient) DeleteUser(ctx context.Context, input auth.DeleteUserInput) error {
+	if err := input.Validate(); err != nil {
+		return err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -499,6 +546,10 @@ func (c *cognitoClient) DeleteUser(ctx context.Context, input auth.DeleteUserInp
 }
 
 func (c *cognitoClient) Logout(ctx context.Context, input auth.LogoutInput) error {
+	if err := input.Validate(); err != nil {
+		return err
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 

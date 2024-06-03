@@ -13,14 +13,26 @@ func NewUserService(repo user.UserRepository) user.UserService {
 }
 
 func (u *UserService) GetByID(input *user.GetUserInput) (*user.User, error) {
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+
 	return u.repo.GetByID(input)
 }
 
 func (u *UserService) GetByEmail(email *user.GetUserByEmailInput) (*user.User, error) {
+	if err := email.Validate(); err != nil {
+		return nil, err
+	}
+
 	return u.repo.GetByEmail(email)
 }
 
 func (u *UserService) Create(input *user.CreateUserInput) (*user.CreateUserOutput, error) {
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+
 	getUserByEmailInput := user.GetUserByEmailInput{Email: input.Email}
 	if err := getUserByEmailInput.Validate(); err != nil {
 		return nil, err
@@ -37,9 +49,7 @@ func (u *UserService) Create(input *user.CreateUserInput) (*user.CreateUserOutpu
 		return nil, user.ErrUserAlreadyExists
 	}
 
-	out := &user.CreateUserOutput{
-		ID: &input.ID,
-	}
+	out := user.NewCreateUserOutput(&input.ID, u)
 
 	if err := u.repo.Create(input); err != nil {
 		return nil, err
@@ -49,6 +59,10 @@ func (u *UserService) Create(input *user.CreateUserInput) (*user.CreateUserOutpu
 }
 
 func (u *UserService) Update(input *user.UpdateUserInput) (*user.UpdateUserOutput, error) {
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+
 	getUserInput := user.GetUserInput{ID: input.ID.String()}
 	if err := getUserInput.Validate(); err != nil {
 		return nil, err
@@ -62,14 +76,16 @@ func (u *UserService) Update(input *user.UpdateUserInput) (*user.UpdateUserOutpu
 		return nil, user.ErrUserNotFound
 	}
 
-	out := &user.UpdateUserOutput{
-		Backup: userOut,
-	}
+	out := user.NewUpdateUserOutput(userOut, u)
 
 	return out, u.repo.Update(input)
 }
 
 func (u *UserService) Delete(id *user.DeleteUserInput) (*user.DeleteUserOutput, error) {
+	if err := id.Validate(); err != nil {
+		return nil, err
+	}
+
 	getUserInput := user.GetUserInput{ID: id.ID.String()}
 	if err := getUserInput.Validate(); err != nil {
 		return nil, err
@@ -84,9 +100,7 @@ func (u *UserService) Delete(id *user.DeleteUserInput) (*user.DeleteUserOutput, 
 		return nil, user.ErrUserNotFound
 	}
 
-	out := &user.DeleteUserOutput{
-		Backup: userOut,
-	}
+	out := user.NewDeleteUserOutput(userOut, u.repo)
 
 	if err := u.repo.Delete(id); err != nil {
 		return nil, err

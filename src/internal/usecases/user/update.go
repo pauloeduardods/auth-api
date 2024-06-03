@@ -33,7 +33,7 @@ func (uc *UpdateUserUseCase) Execute(ctx context.Context, input UpdateUserInput)
 	}
 	defer func() {
 		if execErr != nil {
-			if err := updateOut.Rollback(ctx, uc.userService); err != nil {
+			if err := updateOut.Rollback(ctx); err != nil {
 				uc.logger.Error("Error rolling back update user: %s", err)
 			}
 		}

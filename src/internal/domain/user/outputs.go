@@ -3,24 +3,32 @@ package user
 import "context"
 
 type UpdateUserOutput struct {
-	Backup *User
+	backup *User
+	svc    UserService
 }
 
-func (u *UpdateUserOutput) Rollback(ctx context.Context, userService UserService) error {
-	if u.Backup == nil {
+func NewUpdateUserOutput(backup *User, svc UserService) *UpdateUserOutput {
+	return &UpdateUserOutput{
+		backup: backup,
+		svc:    svc,
+	}
+}
+
+func (u *UpdateUserOutput) Rollback(ctx context.Context) error {
+	if u.backup == nil {
 		return nil
 	}
 	updateUserInput := &UpdateUserInput{
-		ID:    u.Backup.ID,
-		Email: &u.Backup.Email,
-		Name:  &u.Backup.Name,
-		Phone: u.Backup.Phone,
+		ID:    u.backup.ID,
+		Email: &u.backup.Email,
+		Name:  &u.backup.Name,
+		Phone: u.backup.Phone,
 	}
 	if err := updateUserInput.Validate(); err != nil {
 		return err
 	}
 
-	_, err := userService.Update(updateUserInput)
+	_, err := u.svc.Update(updateUserInput)
 	if err != nil {
 		return err
 	}
@@ -28,10 +36,18 @@ func (u *UpdateUserOutput) Rollback(ctx context.Context, userService UserService
 }
 
 type CreateUserOutput struct {
-	ID *UserID
+	ID  *UserID
+	svc UserService
 }
 
-func (c *CreateUserOutput) Rollback(ctx context.Context, userService UserService) error {
+func NewCreateUserOutput(id *UserID, svc UserService) *CreateUserOutput {
+	return &CreateUserOutput{
+		ID:  id,
+		svc: svc,
+	}
+}
+
+func (c *CreateUserOutput) Rollback(ctx context.Context) error {
 	if c.ID == nil {
 		return nil
 	}
@@ -43,7 +59,7 @@ func (c *CreateUserOutput) Rollback(ctx context.Context, userService UserService
 		return err
 	}
 
-	_, err := userService.Delete(deleteUserInput)
+	_, err := c.svc.Delete(deleteUserInput)
 	if err != nil {
 		return err
 	}
@@ -51,23 +67,31 @@ func (c *CreateUserOutput) Rollback(ctx context.Context, userService UserService
 }
 
 type DeleteUserOutput struct {
-	Backup *User
+	backup *User
+	repo   UserRepository
 }
 
-func (d *DeleteUserOutput) Rollback(ctx context.Context, authRepo UserRepository) error {
-	if d.Backup == nil {
+func NewDeleteUserOutput(backup *User, repo UserRepository) *DeleteUserOutput {
+	return &DeleteUserOutput{
+		backup: backup,
+		repo:   repo,
+	}
+}
+
+func (d *DeleteUserOutput) Rollback(ctx context.Context) error {
+	if d.backup == nil {
 		return nil
 	}
 	createUserInput := &CreateUserInput{
-		Email: d.Backup.Email,
-		Name:  d.Backup.Name,
-		Phone: d.Backup.Phone,
+		Email: d.backup.Email,
+		Name:  d.backup.Name,
+		Phone: d.backup.Phone,
 	}
 	if err := createUserInput.Validate(); err != nil {
 		return err
 	}
 
-	err := authRepo.Create(createUserInput)
+	err := d.repo.Create(createUserInput)
 	if err != nil {
 		return err
 	}

@@ -5,6 +5,7 @@ import (
 	"auth-api/src/internal/domain/user"
 	"auth-api/src/pkg/logger"
 	"context"
+	"errors"
 )
 
 type RegisterUserUseCase struct {
@@ -51,7 +52,7 @@ func (uc *RegisterUserUseCase) Execute(ctx context.Context, input RegisterUserIn
 	}
 	defer func() {
 		if execErr != nil {
-			if err := signUpOutput.Rollback(ctx, uc.auth); err != nil {
+			if err := signUpOutput.Rollback(ctx); err != nil {
 				uc.logger.Error("Error rolling back sign up: %s", err)
 			}
 		}
@@ -74,11 +75,11 @@ func (uc *RegisterUserUseCase) Execute(ctx context.Context, input RegisterUserIn
 	}
 	defer func() {
 		if execErr != nil {
-			if err := createOut.Rollback(ctx, uc.userService); err != nil {
+			if err := createOut.Rollback(ctx); err != nil {
 				uc.logger.Error("Error rolling back create user: %s", err)
 			}
 		}
 	}()
 
-	return nil
+	return errors.New("not implemented")
 }
