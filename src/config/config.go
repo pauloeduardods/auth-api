@@ -10,6 +10,7 @@ type AwsConfig struct {
 	Region            string `mapstructure:"region"`
 	CognitoClientId   string `mapstructure:"cognito_client_id"`
 	CognitoUserPoolID string `mapstructure:"cognito_user_pool_id"`
+	CodesTable        string `mapstructure:"codes_table"`
 }
 
 type ApiConfig struct {
@@ -38,6 +39,7 @@ func setDefaults() {
 	viper.SetDefault("aws.region", "us-east-1")
 	viper.SetDefault("aws.cognito_client_id", "SET_ME")
 	viper.SetDefault("aws.cognito_user_pool_id", "SET_ME")
+	viper.SetDefault("aws.codes_table", "SET_ME")
 
 	viper.SetDefault("sql.host", "localhost")
 	viper.SetDefault("sql.port", 5432)
