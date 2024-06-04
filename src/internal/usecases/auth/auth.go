@@ -3,6 +3,7 @@ package auth_usecases
 import (
 	"auth-api/src/internal/domain/admin"
 	"auth-api/src/internal/domain/auth"
+	"auth-api/src/internal/domain/code"
 	"auth-api/src/internal/domain/user"
 	"auth-api/src/pkg/logger"
 )
@@ -23,7 +24,7 @@ type UseCases struct {
 	SetPassword    *SetPasswordUseCase
 }
 
-func NewUseCases(authService auth.AuthService, adminService admin.AdminService, userService user.UserService, logger logger.Logger) *UseCases {
+func NewUseCases(authService auth.AuthService, adminService admin.AdminService, userService user.UserService, logger logger.Logger, code code.CodeService) *UseCases {
 	return &UseCases{
 		Login:          NewLoginUseCase(authService),
 		AddGroup:       NewAddGroupUseCase(adminService, userService, authService, logger),
@@ -33,7 +34,7 @@ func NewUseCases(authService auth.AuthService, adminService admin.AdminService, 
 		VerifyMFA:      NewVerifyMFAUseCase(authService),
 		AdminRemoveMFA: NewAdminRemoveMFAUseCase(authService),
 		RemoveMFA:      NewRemoveMFAUseCase(authService),
-		ConfirmSignUp:  NewConfirmSignUpUseCase(authService),
+		ConfirmSignUp:  NewConfirmSignUpUseCase(authService, code),
 		GetMe:          NewGetMeUseCase(authService),
 		ActivateMFA:    NewActivateMFAUseCase(authService),
 		Logout:         NewLogoutUseCase(authService),

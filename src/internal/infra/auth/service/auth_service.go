@@ -297,20 +297,16 @@ func (c *cognitoClient) ConfirmSignUp(ctx context.Context, input auth.ConfirmSig
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	confirmSignUp := &cognito.ConfirmSignUpInput{
-		ClientId:         aws.String(c.clientId),
-		Username:         aws.String(input.Username),
-		ConfirmationCode: aws.String(input.Code),
+	adminConfirmSignUpInput := &cognito.AdminConfirmSignUpInput{
+		UserPoolId: aws.String(c.userPoolId),
+		Username:   aws.String(input.Username),
 	}
 
-	_, err := c.client.ConfirmSignUp(ctx, confirmSignUp)
+	_, err := c.client.AdminConfirmSignUp(ctx, adminConfirmSignUpInput)
 	if err != nil {
 		errorType := err.Error()
-		if strings.Contains(errorType, "CodeMismatchException") {
-			return nil, app_error.NewApiError(400, "Invalid confirmation code")
-		}
-		if strings.Contains(errorType, "ExpiredCodeException") {
-			return nil, app_error.NewApiError(400, "Confirmation code expired")
+		if strings.Contains(errorType, "UserNotFoundException") {
+			return nil, auth.ErrUserNotFound
 		}
 		c.logger.Error("Cognito confirm signup error", err)
 		return nil, err
@@ -675,6 +671,38 @@ func (c *cognitoClient) AdminLogout(ctx context.Context, input auth.AdminLogoutI
 			return auth.ErrUserNotFound
 		}
 		c.logger.Error("Cognito admin logout error", err)
+		return err
+	}
+
+	return nil
+}
+
+func (c *cognitoClient) VerifyEmail(ctx context.Context, input auth.VerifyEmailInput) error {
+	if err := input.Validate(); err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	verifyUserAttributeInput := &cognito.AdminUpdateUserAttributesInput{
+		UserPoolId: aws.String(c.userPoolId),
+		Username:   aws.String(input.Username),
+		UserAttributes: []types.AttributeType{
+			{
+				Name:  aws.String("email_verified"),
+				Value: aws.String("true"),
+			},
+		},
+	}
+
+	_, err := c.client.AdminUpdateUserAttributes(ctx, verifyUserAttributeInput)
+	if err != nil {
+		errorType := err.Error()
+		if strings.Contains(errorType, "UserNotFoundException") {
+			return auth.ErrUserNotFound
+		}
+		c.logger.Error("Cognito verify email error", err)
 		return err
 	}
 

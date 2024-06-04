@@ -29,4 +29,5 @@ type AuthService interface {
 	SetPassword(ctx context.Context, input SetPasswordInput) (*LoginOutput, error)
 	GetUser(ctx context.Context, input GetUserInput) (*GetUserOutput, error)
 	AdminLogout(ctx context.Context, input AdminLogoutInput) error
+	VerifyEmail(ctx context.Context, input VerifyEmailInput) error
 }

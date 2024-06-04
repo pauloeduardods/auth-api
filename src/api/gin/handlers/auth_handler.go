@@ -3,6 +3,7 @@ package handlers
 import (
 	"auth-api/src/internal/domain/admin"
 	"auth-api/src/internal/domain/auth"
+	"auth-api/src/internal/domain/code"
 	"auth-api/src/internal/domain/user"
 	auth_usecases "auth-api/src/internal/usecases/auth"
 	"context"
@@ -49,7 +50,12 @@ func (h *AuthHandler) ConfirmSignUp() gin.HandlerFunc {
 			_, err := h.useCases.ConfirmSignUp.Execute(ctx, auth_usecases.ConfirmSignUpInput{
 				ConfirmSignUpInput: auth.ConfirmSignUpInput{
 					Username: input.Email,
-					Code:     input.Code,
+				},
+				VerifyCodeInput: code.VerifyCodeInput{
+					Code: input.Code,
+				},
+				VerifyEmailInput: auth.VerifyEmailInput{
+					Username: input.Email,
 				},
 			})
 			return err

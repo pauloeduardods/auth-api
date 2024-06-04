@@ -1,8 +1,6 @@
 package code
 
-import "time"
-
 type CodeService interface {
-	GenerateAndSave(identifier string, expiresAt time.Time, length int, canContainLetters bool) (*Code, error)
-	VerifyCode(identifier, code string) error
+	GenerateAndSave(input GenerateAndSaveInput) (*Code, error)
+	VerifyCode(input VerifyCodeInput) error
 }

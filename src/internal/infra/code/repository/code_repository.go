@@ -75,7 +75,7 @@ func (r *CodeRepositoryDynamoDB) FindByIdentifier(identifier string) (*[]code.Co
 	return &codes, nil
 }
 
-func (r *CodeRepositoryDynamoDB) Delete(code *code.Code) error {
+func (r *CodeRepositoryDynamoDB) Delete(code *code.Code) error { //TODO: Fix this
 	_, err := r.dynamoDBClient.DeleteItem(context.TODO(), &dynamodb.DeleteItemInput{
 		TableName: aws.String(r.tableName),
 		Key: map[string]types.AttributeValue{

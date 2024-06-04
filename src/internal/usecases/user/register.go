@@ -2,6 +2,7 @@ package user_usecases
 
 import (
 	"auth-api/src/internal/domain/auth"
+	"auth-api/src/internal/domain/events"
 	"auth-api/src/internal/domain/user"
 	"auth-api/src/pkg/logger"
 	"context"
@@ -11,6 +12,7 @@ type RegisterUserUseCase struct {
 	userService user.UserService
 	auth        auth.AuthService
 	logger      logger.Logger
+	events      events.EventDispatcher
 }
 
 type RegisterUserInput struct {
@@ -18,11 +20,12 @@ type RegisterUserInput struct {
 	user.CreateUserInput
 }
 
-func NewRegisterUserUseCase(userService user.UserService, auth auth.AuthService, logger logger.Logger) *RegisterUserUseCase {
+func NewRegisterUserUseCase(userService user.UserService, auth auth.AuthService, logger logger.Logger, events events.EventDispatcher) *RegisterUserUseCase {
 	return &RegisterUserUseCase{
 		userService: userService,
 		auth:        auth,
 		logger:      logger,
+		events:      events,
 	}
 }
 
@@ -77,6 +80,17 @@ func (uc *RegisterUserUseCase) Execute(ctx context.Context, input RegisterUserIn
 			if err := createOut.Rollback(ctx); err != nil {
 				uc.logger.Error("Error rolling back create user: %s", err)
 			}
+		}
+	}()
+
+	userRegisteredEvent := &user.UserRegisteredEvent{
+		Email:             input.CreateUserInput.Email,
+		NeedsVerification: true,
+	}
+
+	go func() {
+		if err := uc.events.Dispatch(userRegisteredEvent); err != nil {
+			uc.logger.Error("Error dispatching user registered event: %s", err)
 		}
 	}()
 

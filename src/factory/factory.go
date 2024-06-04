@@ -4,10 +4,19 @@ import (
 	"auth-api/src/config"
 	"auth-api/src/internal/domain/admin"
 	"auth-api/src/internal/domain/auth"
+	"auth-api/src/internal/domain/code"
+	"auth-api/src/internal/domain/email"
+	"auth-api/src/internal/domain/events"
 	"auth-api/src/internal/domain/user"
+	eventsIplm "auth-api/src/internal/events"
+	events_handlers "auth-api/src/internal/events/handlers"
+	"auth-api/src/internal/events/register"
 	admin_repo "auth-api/src/internal/infra/admin/repository"
 	admin_service "auth-api/src/internal/infra/admin/service"
 	auth_service "auth-api/src/internal/infra/auth/service"
+	code_repo "auth-api/src/internal/infra/code/repository"
+	code_service "auth-api/src/internal/infra/code/service"
+	email_service "auth-api/src/internal/infra/email/service"
 	user_repo "auth-api/src/internal/infra/user/repository"
 	user_service "auth-api/src/internal/infra/user/service"
 	admin_usecases "auth-api/src/internal/usecases/admin"
@@ -20,23 +29,29 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/ses"
 )
 
 type Factory struct {
 	UseCases   UseCases
 	Repository Repository
 	Service    Service
+	Event      events.EventDispatcher
 }
 
 type Service struct {
 	Auth  auth.AuthService
 	User  user.UserService
 	Admin admin.AdminService
+	Code  code.CodeService
+	Email email.EmailService
 }
 
 type Repository struct {
 	User  user.UserRepository
 	Admin admin.AdminRepository
+	Code  code.CodeRepository
 }
 
 type UseCases struct {
@@ -52,60 +67,57 @@ func newAuthService(logger logger.Logger, awsConfig *aws.Config, config config.C
 	return auth_service.NewAuthService(cognitoClient, config.Aws.CognitoClientId, jwtVerify, config.Aws.CognitoUserPoolID, logger)
 }
 
-func newAuthUseCases(auth auth.AuthService, user user.UserService, admin admin.AdminService, logger logger.Logger) *auth_usecases.UseCases {
-	return auth_usecases.NewUseCases(auth, admin, user, logger)
+func newCodeRepository(awsConfig aws.Config, logger logger.Logger, config config.Config) code.CodeRepository {
+	dynamoDBClient := dynamodb.NewFromConfig(awsConfig)
+	return code_repo.NewCodeRepositoryDynamoDB(config.Aws.CodesTable, dynamoDBClient, logger)
 }
 
-func newUserRepo(db *sql.DB, logger logger.Logger) user.UserRepository {
-	return user_repo.NewUserRepository(db, logger)
-}
-
-func newUserService(userRepo user.UserRepository) user.UserService {
-	return user_service.NewUserService(userRepo)
-}
-
-func newUserUseCases(userService user.UserService, authService auth.AuthService, logger logger.Logger) *user_usecases.UseCases {
-	return user_usecases.NewUseCases(userService, authService, logger)
-}
-
-func newAdminRepo(db *sql.DB, logger logger.Logger) admin.AdminRepository {
-	return admin_repo.NewAdminRepository(db, logger)
-}
-
-func newAdminService(adminRepo admin.AdminRepository, logger logger.Logger) admin.AdminService {
-	return admin_service.NewAdminService(adminRepo, logger)
-}
-
-func newAdminUseCases(adminService admin.AdminService, authService auth.AuthService, logger logger.Logger) *admin_usecases.UseCases {
-	return admin_usecases.NewUseCases(adminService, authService, logger)
+func newEmailService(awsConfig aws.Config, logger logger.Logger) email.EmailService {
+	sesClient := ses.NewFromConfig(awsConfig)
+	return email_service.NewEmailService(sesClient, logger)
 }
 
 func New(ctx context.Context, logger logger.Logger, awsConfig aws.Config, config config.Config, db *sql.DB) (*Factory, error) {
-	userRepo := newUserRepo(db, logger)
-	adminRepo := newAdminRepo(db, logger)
+	userRepo := user_repo.NewUserRepository(db, logger)
+	adminRepo := admin_repo.NewAdminRepository(db, logger)
+	codeRepo := newCodeRepository(awsConfig, logger, config)
 
 	authService := newAuthService(logger, &awsConfig, config)
-	userService := newUserService(userRepo)
-	adminService := newAdminService(adminRepo, logger)
+	userService := user_service.NewUserService(userRepo)
+	adminService := admin_service.NewAdminService(adminRepo, logger)
+	codeService := code_service.NewCodeServiceImpl(codeRepo, logger)
+	emailService := newEmailService(awsConfig, logger)
 
-	authUseCases := newAuthUseCases(authService, userService, adminService, logger)
-	adminUseCases := newAdminUseCases(adminService, authService, logger)
-	userUseCases := newUserUseCases(userService, authService, logger)
+	events := eventsIplm.NewEventDispatcher()
+
+	handlers := events_handlers.NewEventsHandlers(logger, codeService, emailService)
+
+	register := register.NewRegister(events, *handlers)
+
+	register.RegisterHandlers()
+
+	authUseCases := auth_usecases.NewUseCases(authService, adminService, userService, logger, codeService)
+	adminUseCases := admin_usecases.NewUseCases(adminService, authService, logger)
+	userUseCases := user_usecases.NewUseCases(userService, authService, logger, events)
 
 	return &Factory{
 		Repository: Repository{
 			User:  userRepo,
 			Admin: adminRepo,
+			Code:  codeRepo,
 		},
 		Service: Service{
 			Auth:  authService,
 			User:  userService,
 			Admin: adminService,
+			Code:  codeService,
+			Email: emailService,
 		},
 		UseCases: UseCases{
 			Auth:  authUseCases,
 			User:  userUseCases,
 			Admin: adminUseCases,
 		},
+		Event: events,
 	}, nil
 }

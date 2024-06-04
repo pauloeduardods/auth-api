@@ -51,7 +51,6 @@ func (input *SignUpInput) Validate() error {
 
 type ConfirmSignUpInput struct {
 	Username string
-	Code     string
 }
 
 func (input *ConfirmSignUpInput) Validate() error {
@@ -61,9 +60,6 @@ func (input *ConfirmSignUpInput) Validate() error {
 	}
 	input.Username = lowerCaseUsername
 
-	if err := validator.ValidateNumeric(input.Code); err != nil {
-		return app_error.NewApiError(http.StatusBadRequest, "Invalid code", fmt.Sprintf("Field: %s", "Code"))
-	}
 	return nil
 }
 
@@ -296,6 +292,32 @@ type AdminLogoutInput struct {
 }
 
 func (input *AdminLogoutInput) Validate() error {
+	lowerCaseUsername, err := validateEmail(input.Username)
+	if err != nil {
+		return err
+	}
+	input.Username = lowerCaseUsername
+	return nil
+}
+
+type ActivateUserInput struct {
+	Username string
+}
+
+func (input *ActivateUserInput) Validate() error {
+	lowerCaseUsername, err := validateEmail(input.Username)
+	if err != nil {
+		return err
+	}
+	input.Username = lowerCaseUsername
+	return nil
+}
+
+type VerifyEmailInput struct {
+	Username string
+}
+
+func (input *VerifyEmailInput) Validate() error {
 	lowerCaseUsername, err := validateEmail(input.Username)
 	if err != nil {
 		return err

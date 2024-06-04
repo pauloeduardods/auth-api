@@ -3,32 +3,38 @@ package code_service
 import (
 	"auth-api/src/internal/domain/code"
 	"auth-api/src/pkg/code_generator"
-	"time"
+	"auth-api/src/pkg/logger"
 )
 
 type CodeServiceImpl struct {
-	CodeRepo code.CodeRepository
+	codeRepo code.CodeRepository
+	logger   logger.Logger
 }
 
-func NewCodeServiceImpl(repo code.CodeRepository) code.CodeService {
+func NewCodeServiceImpl(repo code.CodeRepository, logger logger.Logger) code.CodeService {
 	return &CodeServiceImpl{
-		CodeRepo: repo,
+		codeRepo: repo,
+		logger:   logger,
 	}
 }
 
-func (s *CodeServiceImpl) GenerateAndSave(identifier string, expiresAt time.Time, length int, canContainLetters bool) (*code.Code, error) {
-	codeValue, err := code_generator.GenerateCode(length, canContainLetters)
+func (s *CodeServiceImpl) GenerateAndSave(input code.GenerateAndSaveInput) (*code.Code, error) {
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+
+	codeValue, err := code_generator.GenerateCode(input.Length, input.CanContainLetters)
 	if err != nil {
 		return nil, err
 	}
 
 	code := &code.Code{
 		Value:      codeValue,
-		ExpiresAt:  expiresAt,
-		Identifier: identifier,
+		Identifier: input.Identifier,
+		ExpiresAt:  input.ExpiresAt,
 	}
 
-	err = s.CodeRepo.Save(code)
+	err = s.codeRepo.Save(code)
 	if err != nil {
 		return nil, err
 	}
@@ -36,8 +42,12 @@ func (s *CodeServiceImpl) GenerateAndSave(identifier string, expiresAt time.Time
 	return code, nil
 }
 
-func (s *CodeServiceImpl) VerifyCode(identifier, value string) error {
-	codes, err := s.CodeRepo.FindByIdentifier(identifier)
+func (s *CodeServiceImpl) VerifyCode(input code.VerifyCodeInput) error {
+	if err := input.Validate(); err != nil {
+		return err
+	}
+
+	codes, err := s.codeRepo.FindByIdentifier(input.Identifier)
 	if err != nil {
 		return err
 	}
@@ -47,7 +57,13 @@ func (s *CodeServiceImpl) VerifyCode(identifier, value string) error {
 	}
 
 	for _, c := range *codes {
-		if !c.IsExpired() && c.Value == value {
+		if c.Value == input.Code {
+			if c.IsExpired() {
+				return code.ErrCodeExpired
+			}
+			if err := s.codeRepo.Delete(&c); err != nil {
+				s.logger.Error("Error deleting code", err)
+			}
 			return nil
 		}
 	}
