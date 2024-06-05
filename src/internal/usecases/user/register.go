@@ -2,8 +2,8 @@ package user_usecases
 
 import (
 	"auth-api/src/internal/domain/auth"
-	"auth-api/src/internal/domain/events"
 	"auth-api/src/internal/domain/user"
+	"auth-api/src/internal/events"
 	"auth-api/src/pkg/logger"
 	"context"
 )
@@ -83,16 +83,14 @@ func (uc *RegisterUserUseCase) Execute(ctx context.Context, input RegisterUserIn
 		}
 	}()
 
-	userRegisteredEvent := &user.UserRegisteredEvent{
+	userRegisteredEvent := &events.UserRegisteredEvent{
 		Email:             input.CreateUserInput.Email,
 		NeedsVerification: true,
 	}
 
-	go func() {
-		if err := uc.events.Dispatch(userRegisteredEvent); err != nil {
-			uc.logger.Error("Error dispatching user registered event: %s", err)
-		}
-	}()
+	if err := uc.events.Dispatch(userRegisteredEvent); err != nil {
+		uc.logger.Error("Error dispatching user registered event: %s", err)
+	}
 
 	return nil
 }

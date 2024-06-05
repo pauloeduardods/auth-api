@@ -1,22 +1,24 @@
 package events_handlers
 
 import (
-	"auth-api/src/internal/domain/code"
-	"auth-api/src/internal/domain/email"
-	user_events "auth-api/src/internal/events/handlers/user"
+	"auth-api/src/internal/events"
+	auth_usecases "auth-api/src/internal/usecases/auth"
 	"auth-api/src/pkg/logger"
 )
 
 type EventsHandlers struct {
-	SendConfirmationHandler *user_events.SendConfirmationHandler
+	sendConfirmationHandler *SendConfirmationHandler
 }
 
 func NewEventsHandlers(
 	logger logger.Logger,
-	codeService code.CodeService,
-	emailService email.EmailService,
+	authUsecases auth_usecases.UseCases,
 ) *EventsHandlers {
 	return &EventsHandlers{
-		SendConfirmationHandler: user_events.NewSendConfirmationHandler(logger, codeService, emailService),
+		sendConfirmationHandler: NewSendConfirmationHandler(logger, authUsecases),
 	}
+}
+
+func (h *EventsHandlers) RegisterHandlers(dispatcher events.EventDispatcher) {
+	dispatcher.Register(events.UserRegistered, h.sendConfirmationHandler)
 }

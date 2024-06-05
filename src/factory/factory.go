@@ -6,11 +6,10 @@ import (
 	"auth-api/src/internal/domain/auth"
 	"auth-api/src/internal/domain/code"
 	"auth-api/src/internal/domain/email"
-	"auth-api/src/internal/domain/events"
 	"auth-api/src/internal/domain/user"
+	"auth-api/src/internal/events"
 	eventsIplm "auth-api/src/internal/events"
 	events_handlers "auth-api/src/internal/events/handlers"
-	"auth-api/src/internal/events/register"
 	admin_repo "auth-api/src/internal/infra/admin/repository"
 	admin_service "auth-api/src/internal/infra/admin/service"
 	auth_service "auth-api/src/internal/infra/auth/service"
@@ -88,17 +87,14 @@ func New(ctx context.Context, logger logger.Logger, awsConfig aws.Config, config
 	codeService := code_service.NewCodeServiceImpl(codeRepo, logger)
 	emailService := newEmailService(awsConfig, logger)
 
-	events := eventsIplm.NewEventDispatcher()
+	dispatcher := eventsIplm.NewEventDispatcher(logger)
 
-	handlers := events_handlers.NewEventsHandlers(logger, codeService, emailService)
-
-	register := register.NewRegister(events, *handlers)
-
-	register.RegisterHandlers()
-
-	authUseCases := auth_usecases.NewUseCases(authService, adminService, userService, logger, codeService)
+	authUseCases := auth_usecases.NewUseCases(authService, adminService, userService, logger, codeService, emailService)
 	adminUseCases := admin_usecases.NewUseCases(adminService, authService, logger)
-	userUseCases := user_usecases.NewUseCases(userService, authService, logger, events)
+	userUseCases := user_usecases.NewUseCases(userService, authService, logger, dispatcher)
+
+	handlers := events_handlers.NewEventsHandlers(logger, *authUseCases)
+	handlers.RegisterHandlers(dispatcher)
 
 	return &Factory{
 		Repository: Repository{
@@ -118,6 +114,6 @@ func New(ctx context.Context, logger logger.Logger, awsConfig aws.Config, config
 			User:  userUseCases,
 			Admin: adminUseCases,
 		},
-		Event: events,
+		Event: dispatcher,
 	}, nil
 }

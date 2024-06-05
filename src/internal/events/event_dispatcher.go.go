@@ -1,29 +1,31 @@
 package events
 
 import (
-	"auth-api/src/internal/domain/events"
+	"auth-api/src/pkg/logger"
 	"errors"
 	"sync"
 )
 
 type EventDispatcherImpl struct {
-	handlers map[events.EventType][]events.EventHandler
+	handlers map[EventType][]EventHandler
 	mu       sync.RWMutex
+	logger   logger.Logger
 }
 
-func NewEventDispatcher() events.EventDispatcher {
+func NewEventDispatcher(logger logger.Logger) *EventDispatcherImpl {
 	return &EventDispatcherImpl{
-		handlers: make(map[events.EventType][]events.EventHandler),
+		handlers: make(map[EventType][]EventHandler),
+		logger:   logger,
 	}
 }
 
-func (d *EventDispatcherImpl) Register(eventType events.EventType, handler events.EventHandler) {
+func (d *EventDispatcherImpl) Register(eventType EventType, handler EventHandler) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.handlers[eventType] = append(d.handlers[eventType], handler)
 }
 
-func (d *EventDispatcherImpl) Dispatch(event events.Event) error {
+func (d *EventDispatcherImpl) Dispatch(event Event) error {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	handlers, ok := d.handlers[event.GetType()]
@@ -32,9 +34,11 @@ func (d *EventDispatcherImpl) Dispatch(event events.Event) error {
 	}
 
 	for _, handler := range handlers {
-		if err := handler.Handle(event); err != nil {
-			return err //TODO: improve error handling with a list of errors
-		}
+		go func(h EventHandler) {
+			if err := h.Handle(event); err != nil {
+				d.logger.Error("error handling event: %v err: %v", event, err)
+			}
+		}(handler)
 	}
 	return nil
 }

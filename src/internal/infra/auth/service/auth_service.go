@@ -490,7 +490,7 @@ func (c *cognitoClient) CreateAdmin(ctx context.Context, input auth.CreateAdminI
 
 	var userId string
 	for _, attr := range cognitoOut.User.Attributes {
-		if *attr.Name == "sub" { //TODO: Check if this is correct
+		if *attr.Name == "sub" {
 			userId = *attr.Value
 			break
 		}

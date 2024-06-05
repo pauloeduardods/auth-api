@@ -18,3 +18,12 @@ type EventDispatcher interface {
 	Register(eventType EventType, handler EventHandler)
 	Dispatch(event Event) error
 }
+
+type UserRegisteredEvent struct {
+	Email             string
+	NeedsVerification bool
+}
+
+func (e *UserRegisteredEvent) GetType() EventType {
+	return UserRegistered
+}

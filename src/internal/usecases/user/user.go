@@ -2,8 +2,8 @@ package user_usecases
 
 import (
 	"auth-api/src/internal/domain/auth"
-	"auth-api/src/internal/domain/events"
 	"auth-api/src/internal/domain/user"
+	"auth-api/src/internal/events"
 	"auth-api/src/pkg/logger"
 )
 
