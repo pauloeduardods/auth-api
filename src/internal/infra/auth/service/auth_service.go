@@ -74,16 +74,16 @@ func (c *cognitoClient) ActivateMFA(ctx context.Context, input auth.ActivateMFAI
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "CodeMismatchException") {
-			return app_error.NewApiError(400, "Invalid MFA code")
+			return auth.ErrInvalidMfaCode
 		}
 		if strings.Contains(errorType, "NotAuthorizedException") {
-			return app_error.NewApiError(401, "Invalid access token")
+			return auth.ErrInvalidAccessCode
 		}
 		c.logger.Error("Cognito verify software token error", err)
-		return app_error.NewApiError(400, "Failed to verify software token")
+		return auth.ErrFailedToVerifySoftwareMfa
 	}
 	if verifyOut.Status != "SUCCESS" {
-		return app_error.NewApiError(400, "Invalid MFA code")
+		return auth.ErrInvalidMfaCode
 	}
 
 	setUserMFAPreferenceInput := &cognito.SetUserMFAPreferenceInput{
@@ -121,7 +121,7 @@ func (c *cognitoClient) VerifyMFA(ctx context.Context, input auth.VerifyMFAInput
 	cognitoOut, err := c.client.RespondToAuthChallenge(ctx, respondToAuthChallengeInput)
 	if err != nil {
 		c.logger.Error("Cognito respond to auth challenge error", err)
-		return nil, app_error.NewApiError(400, "Failed to respond to auth challenge")
+		return nil, auth.ErrFailedToRespondToChallenge
 	}
 
 	return &auth.LoginOutput{
@@ -202,13 +202,13 @@ func (c *cognitoClient) Login(ctx context.Context, input auth.LoginInput) (*auth
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "NotAuthorizedException") {
-			return nil, app_error.NewApiError(401, "Invalid username or password")
+			return nil, auth.ErrInvalidUsernameOrPassword
 		}
 		if strings.Contains(errorType, "PasswordResetRequiredException") {
-			return nil, app_error.NewApiError(401, "Password reset required")
+			return nil, auth.ErrPasswordResetRequired
 		}
 		if strings.Contains(errorType, "UserNotConfirmedException") {
-			return nil, app_error.NewApiError(401, "User not confirmed")
+			return nil, auth.ErrUserNotConfirmed
 		}
 		c.logger.Error("Cognito login error", err)
 		return nil, err
@@ -261,7 +261,7 @@ func (c *cognitoClient) SignUp(ctx context.Context, input auth.SignUpInput) (o *
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "UsernameExistsException") {
-			return nil, app_error.NewApiError(409, "Username already exists")
+			return nil, auth.ErrUserAlreadyExists
 		}
 		c.logger.Error("Cognito signup error", err)
 		return nil, err
@@ -330,7 +330,7 @@ func (c *cognitoClient) GetMe(ctx context.Context, input auth.GetMeInput) (*auth
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "NotAuthorizedException") {
-			return nil, app_error.NewApiError(401, "Invalid access token")
+			return nil, auth.ErrInvalidAccessCode
 		}
 		if strings.Contains(errorType, "UserNotFoundException") {
 			return nil, user.ErrUserNotFound
@@ -408,7 +408,7 @@ func (c *cognitoClient) RemoveGroup(ctx context.Context, input auth.RemoveGroupI
 			return auth.ErrUserNotFound
 		}
 		if strings.Contains(errorType, "ResourceNotFoundException") {
-			return app_error.NewApiError(404, "Group not found")
+			return auth.ErrInvalidGroup
 		}
 		c.logger.Error("Cognito remove group error", err)
 		return err
@@ -436,7 +436,7 @@ func (c *cognitoClient) RefreshToken(ctx context.Context, input auth.RefreshToke
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "NotAuthorizedException") {
-			return nil, app_error.NewApiError(401, "Invalid refresh token")
+			return nil, auth.ErrInvalidRefreshToken
 		}
 		c.logger.Error("Cognito refresh token error", err)
 		return nil, err
@@ -482,7 +482,7 @@ func (c *cognitoClient) CreateAdmin(ctx context.Context, input auth.CreateAdminI
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "UsernameExistsException") {
-			return nil, app_error.NewApiError(409, "Username already exists")
+			return nil, auth.ErrUserAlreadyExists
 		}
 		c.logger.Error("Cognito admin create user error", err)
 		return nil, err
@@ -562,7 +562,7 @@ func (c *cognitoClient) Logout(ctx context.Context, input auth.LogoutInput) erro
 	if err != nil {
 		errorType := err.Error()
 		if strings.Contains(errorType, "NotAuthorizedException") {
-			return app_error.NewApiError(401, "Invalid access token")
+			return auth.ErrInvalidAccessCode
 		}
 		c.logger.Error("Cognito logout error", err)
 		return err
