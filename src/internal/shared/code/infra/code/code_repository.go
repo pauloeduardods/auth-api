@@ -4,6 +4,8 @@ import (
 	"auth-api/src/internal/shared/code/domain/code"
 	"auth-api/src/pkg/logger"
 	"context"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -30,14 +32,14 @@ func (r *CodeRepositoryDynamoDB) Save(ctx context.Context, input *code.Code) err
 		TableName: aws.String(r.tableName),
 		Item: map[string]types.AttributeValue{
 			"identifier": &types.AttributeValueMemberS{Value: input.Identifier},
-			"value":      &types.AttributeValueMemberS{Value: input.Value},
-			"expires_at": &types.AttributeValueMemberS{Value: input.ExpiresAt.Format(time.RFC3339)},
+			"code":       &types.AttributeValueMemberS{Value: input.Value},
+			"expires_at": &types.AttributeValueMemberN{Value: fmt.Sprintf("%d", input.ExpiresAt.Unix())},
 		},
 	})
 	return err
 }
 
-func (r *CodeRepositoryDynamoDB) FindByIdentifier(ctx context.Context, identifier string) (*[]code.Code, error) {
+func (r *CodeRepositoryDynamoDB) FindCode(ctx context.Context, identifier, codeValue string) (*code.Code, error) {
 	input := &dynamodb.QueryInput{
 		TableName: aws.String(r.tableName),
 		KeyConditions: map[string]types.Condition{
@@ -47,6 +49,12 @@ func (r *CodeRepositoryDynamoDB) FindByIdentifier(ctx context.Context, identifie
 					&types.AttributeValueMemberS{Value: identifier},
 				},
 			},
+			"code": {
+				ComparisonOperator: types.ComparisonOperatorEq,
+				AttributeValueList: []types.AttributeValue{
+					&types.AttributeValueMemberS{Value: codeValue},
+				},
+			},
 		},
 	}
 
@@ -54,32 +62,31 @@ func (r *CodeRepositoryDynamoDB) FindByIdentifier(ctx context.Context, identifie
 	if err != nil {
 		return nil, err
 	}
+
 	if len(result.Items) == 0 {
 		return nil, code.ErrCodeNotFound
 	}
 
-	codes := make([]code.Code, 0)
-	for _, item := range result.Items {
-		expiresAt, err := time.Parse(time.RFC3339, item["expires_at"].(*types.AttributeValueMemberS).Value)
-		if err != nil {
-			r.logger.Error("failed to parse time: %v", err)
-			continue
-		}
-		codes = append(codes, code.Code{
-			Value:      item["value"].(*types.AttributeValueMemberS).Value,
-			ExpiresAt:  expiresAt,
-			Identifier: item["identifier"].(*types.AttributeValueMemberS).Value,
-		})
+	item := result.Items[0]
+	expiresAtUnix, err := strconv.ParseInt(item["expires_at"].(*types.AttributeValueMemberN).Value, 10, 64)
+	if err != nil {
+		r.logger.Error("failed to parse time: %v", err)
+		return nil, err
 	}
-
-	return &codes, nil
+	expiresAt := time.Unix(expiresAtUnix, 0)
+	return &code.Code{
+		Value:      item["code"].(*types.AttributeValueMemberS).Value,
+		ExpiresAt:  expiresAt,
+		Identifier: item["identifier"].(*types.AttributeValueMemberS).Value,
+	}, nil
 }
 
-func (r *CodeRepositoryDynamoDB) Delete(ctx context.Context, code *code.Code) error { //TODO: Fix this
+func (r *CodeRepositoryDynamoDB) Delete(ctx context.Context, code *code.Code) error {
 	_, err := r.dynamoDBClient.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 		TableName: aws.String(r.tableName),
 		Key: map[string]types.AttributeValue{
 			"identifier": &types.AttributeValueMemberS{Value: code.Identifier},
+			"code":       &types.AttributeValueMemberS{Value: code.Value},
 		},
 	})
 	return err

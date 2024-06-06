@@ -48,26 +48,23 @@ func (s *CodeServiceImpl) VerifyCode(ctx context.Context, input code.VerifyCodeI
 		return err
 	}
 
-	codes, err := s.codeRepo.FindByIdentifier(ctx, input.Identifier)
+	codeOut, err := s.codeRepo.FindCode(ctx, input.Identifier, input.Code)
 	if err != nil {
-		return err
-	}
-
-	if codes == nil || len(*codes) == 0 {
-		return code.ErrCodeNotFound
-	}
-
-	for _, c := range *codes {
-		if c.Value == input.Code {
-			if c.IsExpired() {
-				return code.ErrCodeExpired
-			}
-			if err := s.codeRepo.Delete(ctx, &c); err != nil {
-				s.logger.Error("Error deleting code", err)
-			}
-			return nil
+		switch err {
+		case code.ErrCodeNotFound:
+			return code.ErrInvalidCode
+		default:
+			return err
 		}
 	}
 
-	return code.ErrInvalidCode
+	if codeOut.IsExpired() {
+		return code.ErrCodeExpired
+	}
+
+	if err := s.codeRepo.Delete(ctx, codeOut); err != nil {
+		s.logger.Error("Error deleting code", err)
+	}
+
+	return nil
 }
