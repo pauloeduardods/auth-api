@@ -1,11 +1,10 @@
 package handlers
 
 import (
-	"auth-api/src/internal/domain/admin"
-	"auth-api/src/internal/domain/auth"
-	"auth-api/src/internal/domain/code"
-	"auth-api/src/internal/domain/user"
-	auth_usecases "auth-api/src/internal/usecases/auth"
+	"auth-api/src/internal/modules/user-manager/domain/admin"
+	"auth-api/src/internal/modules/user-manager/domain/auth"
+	"auth-api/src/internal/modules/user-manager/domain/user"
+	auth_usecases "auth-api/src/internal/modules/user-manager/usecases/auth"
 	"context"
 
 	"github.com/gin-gonic/gin"
@@ -48,15 +47,8 @@ func (h *AuthHandler) ConfirmSignUp() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		processRequestNoOutput(c, confirmSignUpInput{}, func(ctx context.Context, input confirmSignUpInput) error {
 			_, err := h.useCases.ConfirmSignUp.Execute(ctx, auth_usecases.ConfirmSignUpInput{
-				ConfirmSignUpInput: auth.ConfirmSignUpInput{
-					Username: input.Email,
-				},
-				VerifyCodeInput: code.VerifyCodeInput{
-					Code: input.Code,
-				},
-				VerifyEmailInput: auth.VerifyEmailInput{
-					Username: input.Email,
-				},
+				Username: input.Email,
+				Code:     input.Code,
 			})
 			return err
 		})

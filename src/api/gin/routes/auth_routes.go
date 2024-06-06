@@ -3,12 +3,12 @@ package routes
 import (
 	"auth-api/src/api/gin/handlers"
 	"auth-api/src/api/gin/middleware"
-	"auth-api/src/internal/domain/auth"
+	"auth-api/src/internal/modules/user-manager/domain/auth"
 	"time"
 )
 
 func (r *routes) configAuthRoutes() {
-	handler := handlers.NewAuthHandler(r.factory.UseCases.Auth)
+	handler := handlers.NewAuthHandler(r.factory.UseCases.UserManager.Auth)
 	authGroup := r.gin.Group("/auth")
 	authGroup.Use(middleware.TimeoutMiddleware(30 * time.Second))
 

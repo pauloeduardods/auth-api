@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"auth-api/src/internal/domain/auth"
+	"auth-api/src/internal/modules/user-manager/domain/auth"
 	"auth-api/src/pkg/app_error"
 
 	"github.com/gin-gonic/gin"

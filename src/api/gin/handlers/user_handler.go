@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"auth-api/src/internal/domain/auth"
-	"auth-api/src/internal/domain/user"
-	user_usecases "auth-api/src/internal/usecases/user"
+	"auth-api/src/internal/modules/user-manager/domain/auth"
+	"auth-api/src/internal/modules/user-manager/domain/user"
+	user_usecases "auth-api/src/internal/modules/user-manager/usecases/user"
 	"auth-api/src/pkg/app_error"
 	"context"
 
@@ -55,12 +55,18 @@ type updateUserInput struct {
 func (h *UserHandler) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		claims, exists := c.Get("claims")
-		userId := claims.(*auth.Claims).Id
 		if !exists {
 			c.Error(app_error.NewApiError(401, "Unauthorized"))
 			c.Abort()
 			return
 		}
+		userClaims, ok := claims.(*auth.Claims)
+		if !ok {
+			c.Error(app_error.NewApiError(401, "Unauthorized"))
+			c.Abort()
+			return
+		}
+		userId := userClaims.Id
 
 		processRequestNoOutput(c, updateUserInput{}, func(ctx context.Context, input updateUserInput) error {
 			userId, err := user.ParseUserID(userId)

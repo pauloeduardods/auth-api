@@ -42,7 +42,7 @@ func (s *Gin) SetupApi() error {
 	apiRoutes := s.Gin.Group("/api/v1")
 
 	// Middlewares
-	authMiddleware := middleware.NewAuthMiddleware(s.factory.Service.Auth)
+	authMiddleware := middleware.NewAuthMiddleware(s.factory.Service.UserManager.Auth)
 
 	//Static files
 	s.Gin.StaticFS("/web", http.Dir("static"))

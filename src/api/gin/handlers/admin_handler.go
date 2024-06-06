@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"auth-api/src/internal/domain/admin"
-	"auth-api/src/internal/domain/auth"
-	admin_usecases "auth-api/src/internal/usecases/admin"
+	"auth-api/src/internal/modules/user-manager/domain/admin"
+	"auth-api/src/internal/modules/user-manager/domain/auth"
+	admin_usecases "auth-api/src/internal/modules/user-manager/usecases/admin"
 	"auth-api/src/pkg/app_error"
 	"context"
 
@@ -52,12 +52,18 @@ type updateAdminInput struct {
 func (h *AdminHandler) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		claims, exists := c.Get("claims")
-		adminId := claims.(*auth.Claims).Id
 		if !exists {
 			c.Error(app_error.NewApiError(401, "Unauthorized"))
 			c.Abort()
 			return
 		}
+		adminClaims, ok := claims.(*auth.Claims)
+		if !ok {
+			c.Error(app_error.NewApiError(401, "Unauthorized"))
+			c.Abort()
+			return
+		}
+		adminId := adminClaims.Id
 
 		processRequestNoOutput(c, updateAdminInput{}, func(ctx context.Context, input updateAdminInput) error {
 			adminId, err := admin.ParseAdminID(adminId)
