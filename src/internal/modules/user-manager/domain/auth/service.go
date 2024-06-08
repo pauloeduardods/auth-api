@@ -32,4 +32,6 @@ type AuthService interface {
 	VerifyEmail(ctx context.Context, input VerifyEmailInput) error
 	GenerateAndSendCode(ctx context.Context, input GenerateAndSendCodeInput) (*GenerateAndSendCodeOutput, error)
 	VerifyCode(ctx context.Context, input VerifyCodeInput) error
+	ChangeForgotPassword(ctx context.Context, input ChangeForgotPasswordInput) error
+	ChangePassword(ctx context.Context, input ChangePasswordInput) error
 }

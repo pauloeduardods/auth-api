@@ -269,3 +269,71 @@ func (h *AuthHandler) RemoveGroup() gin.HandlerFunc {
 		})
 	}
 }
+
+type changePasswordInput struct {
+	AccessToken string `json:"accessToken"`
+	OldPassword string `json:"oldPassword"`
+	NewPassword string `json:"newPassword"`
+}
+
+func (h *AuthHandler) ChangePassword() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		processRequestNoOutput(c, changePasswordInput{}, func(ctx context.Context, input changePasswordInput) error {
+			err := h.useCases.ChangePassword.Execute(ctx, auth_usecases.ChangePasswordInput{
+				AccessToken: input.AccessToken,
+				OldPassword: input.OldPassword,
+				NewPassword: input.NewPassword,
+			})
+			return err
+		})
+	}
+}
+
+type resetPasswordInput struct {
+	Email       string `json:"email"`
+	Code        string `json:"code"`
+	NewPassword string `json:"newPassword"`
+}
+
+func (h *AuthHandler) ResetPassword() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		processRequestNoOutput(c, resetPasswordInput{}, func(ctx context.Context, input resetPasswordInput) error {
+			err := h.useCases.ResetPassword.Execute(ctx, auth_usecases.ResetPasswordInput{
+				Username:    input.Email,
+				Code:        input.Code,
+				NewPassword: input.NewPassword,
+			})
+			return err
+		})
+	}
+}
+
+type sendForgotPasswordCodeInput struct {
+	Email string `json:"email"`
+}
+
+func (h *AuthHandler) SendForgotPasswordCode() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		processRequestNoOutput(c, sendForgotPasswordCodeInput{}, func(ctx context.Context, input sendForgotPasswordCodeInput) error {
+			err := h.useCases.SendForgotPasswordCode.Execute(ctx, auth_usecases.SendForgotPasswordCodeInput{
+				Username: input.Email,
+			})
+			return err
+		})
+	}
+}
+
+type sendConfirmationCodeInput struct {
+	Email string `json:"email"`
+}
+
+func (h *AuthHandler) SendConfirmationCode() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		processRequestNoOutput(c, sendConfirmationCodeInput{}, func(ctx context.Context, input sendConfirmationCodeInput) error {
+			err := h.useCases.SendConfirmationCode.Execute(ctx, auth_usecases.SendConfirmationCodeInput{
+				Username: input.Email,
+			})
+			return err
+		})
+	}
+}

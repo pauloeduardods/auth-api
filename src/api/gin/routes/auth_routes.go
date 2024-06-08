@@ -16,7 +16,11 @@ func (r *routes) configAuthRoutes() {
 	authGroup.POST("/logout", handler.Logout())
 	authGroup.POST("/refresh", handler.RefreshToken())
 	authGroup.POST("/confirm", handler.ConfirmSignUp())
-	authGroup.POST("/set-password", handler.SetPassword())
+	authGroup.POST("/send-confirmation-code", handler.SendConfirmationCode())
+	authGroup.POST("/password/forget", handler.SendForgotPasswordCode())
+	authGroup.POST("/password/reset", handler.ResetPassword())
+	authGroup.POST("/password/change", handler.ChangePassword())
+	authGroup.POST("/password/set", handler.SetPassword())
 
 	mfaGroup := authGroup.Group("/mfa")
 	mfaGroup.POST("/", handler.AddMfa())

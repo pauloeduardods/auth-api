@@ -34,7 +34,7 @@ func (h *SendConfirmationHandler) Handle(event events.Event) error {
 		return nil
 	}
 
-	if err := h.authUsecases.SendConfirmationCodeUseCase.Execute(context.TODO(), auth.SendConfirmationCodeInput{
+	if err := h.authUsecases.SendConfirmationCode.Execute(context.TODO(), auth.SendConfirmationCodeInput{
 		Username: userRegisteredEvent.Email,
 	}); err != nil {
 		h.logger.Error("failed to send confirmation code: %v", err)

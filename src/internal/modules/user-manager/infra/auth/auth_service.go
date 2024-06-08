@@ -740,8 +740,8 @@ func (c *cognitoClient) GenerateAndSendCode(ctx context.Context, input auth.Gene
 
 	sendEmailInput := email.Email{
 		To:      input.Username,
-		Subject: "Your verification code",
-		Body:    "Your verification code is: " + code.Value,
+		Subject: input.Subject,
+		Body:    fmt.Sprintf(input.Body, code.Value),
 	}
 	if err := c.email.SendEmail(ctx, sendEmailInput); err != nil {
 		return nil, err
@@ -769,6 +769,61 @@ func (c *cognitoClient) VerifyCode(ctx context.Context, input auth.VerifyCodeInp
 	}
 
 	if err := c.code.VerifyCode(ctx, verifyInput); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *cognitoClient) ChangeForgotPassword(ctx context.Context, input auth.ChangeForgotPasswordInput) error {
+	if err := input.Validate(); err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	admSetPassword := &cognito.AdminSetUserPasswordInput{
+		UserPoolId: aws.String(c.userPoolId),
+		Username:   aws.String(input.Username),
+		Password:   aws.String(input.NewPassword),
+		Permanent:  true,
+	}
+
+	_, err := c.client.AdminSetUserPassword(ctx, admSetPassword)
+	if err != nil {
+		errorType := err.Error()
+		if strings.Contains(errorType, "UserNotFoundException") {
+			return auth.ErrUserNotFound
+		}
+		c.logger.Error("Cognito change forgot password error", err)
+		return err
+	}
+
+	return nil
+}
+
+func (c *cognitoClient) ChangePassword(ctx context.Context, input auth.ChangePasswordInput) error {
+	if err := input.Validate(); err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	changePasswordInput := &cognito.ChangePasswordInput{
+		AccessToken:      aws.String(input.AccessToken),
+		PreviousPassword: aws.String(input.OldPassword),
+		ProposedPassword: aws.String(input.NewPassword),
+	}
+
+	_, err := c.client.ChangePassword(ctx, changePasswordInput)
+	if err != nil {
+		errorType := err.Error()
+		if strings.Contains(errorType, "NotAuthorizedException") {
+			return auth.ErrInvalidAccessCode
+		}
+		c.logger.Error("Cognito change password error", err)
 		return err
 	}
 

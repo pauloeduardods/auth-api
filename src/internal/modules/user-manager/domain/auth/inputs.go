@@ -376,3 +376,38 @@ func (input *VerifyCodeInput) Validate() error {
 	input.Username = lowerCaseUsername
 	return nil
 }
+
+type ChangeForgotPasswordInput struct {
+	Username    string
+	NewPassword string
+}
+
+func (input *ChangeForgotPasswordInput) Validate() error {
+	lowerCaseUsername, err := validateEmail(input.Username)
+	if err != nil {
+		return err
+	}
+	input.Username = lowerCaseUsername
+
+	if err := validator.ValidatePassword(input.NewPassword); err != nil {
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid password", fmt.Sprintf("Field: %s", "NewPassword"))
+	}
+	return nil
+}
+
+type ChangePasswordInput struct {
+	AccessToken string
+	OldPassword string
+	NewPassword string
+}
+
+func (input *ChangePasswordInput) Validate() error {
+	if err := validator.ValidatePassword(input.OldPassword); err != nil {
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid password", fmt.Sprintf("Field: %s", "OldPassword"))
+	}
+
+	if err := validator.ValidatePassword(input.NewPassword); err != nil {
+		return app_error.NewApiError(http.StatusBadRequest, "Invalid password", fmt.Sprintf("Field: %s", "NewPassword"))
+	}
+	return nil
+}
