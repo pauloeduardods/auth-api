@@ -94,12 +94,6 @@ type AddMFAOutput struct {
 	Session    *string `json:"session,omitempty"`
 }
 
-type GetUserOutput struct {
-	Username string `json:"username"`
-	Name     string `json:"name"`
-	Id       string `json:"id"`
-}
-
 type GenerateAndSendCodeOutput struct {
 	Code string `json:"code"`
 }

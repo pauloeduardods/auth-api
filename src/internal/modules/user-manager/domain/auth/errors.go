@@ -16,4 +16,7 @@ var (
 	ErrUserNotConfirmed           = app_error.NewApiError(401, "User not confirmed")
 	ErrUserAlreadyExists          = app_error.NewApiError(409, "User already exists")
 	ErrInvalidRefreshToken        = app_error.NewApiError(401, "Invalid refresh token")
+	ErrUserNotFound               = app_error.NewApiError(404, "User not found")
+	ErrUserAlreadyConfirmed       = app_error.NewApiError(409, "User already confirmed")
+	ErrInvalidUserStatus          = app_error.NewApiError(400, "Invalid user status")
 )

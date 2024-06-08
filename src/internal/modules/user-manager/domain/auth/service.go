@@ -1,12 +1,7 @@
 package auth
 
 import (
-	"auth-api/src/pkg/app_error"
 	"context"
-)
-
-var (
-	ErrUserNotFound = app_error.NewApiError(404, "User not found")
 )
 
 type AuthService interface {
@@ -27,7 +22,7 @@ type AuthService interface {
 	RemoveMFA(ctx context.Context, input RemoveMFAInput) error
 	Logout(ctx context.Context, input LogoutInput) error
 	SetPassword(ctx context.Context, input SetPasswordInput) (*LoginOutput, error)
-	GetUser(ctx context.Context, input GetUserInput) (*GetUserOutput, error)
+	GetUser(ctx context.Context, input GetUserInput) (*User, error)
 	AdminLogout(ctx context.Context, input AdminLogoutInput) error
 	VerifyEmail(ctx context.Context, input VerifyEmailInput) error
 	GenerateAndSendCode(ctx context.Context, input GenerateAndSendCodeInput) (*GenerateAndSendCodeOutput, error)

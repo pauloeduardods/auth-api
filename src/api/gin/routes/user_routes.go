@@ -12,7 +12,7 @@ func (r *routes) configUserRoutes() {
 	userGroup := r.gin.Group("/user")
 	userGroup.Use(middleware.TimeoutMiddleware(30 * time.Second))
 
-	userGroup.PATCH("/", r.authMiddleware.AuthMiddleware(auth.User), handler.Update())
+	userGroup.PATCH("/", r.authMiddleware.AuthMiddleware(auth.GroupUser), handler.Update())
 	userGroup.POST("/register", handler.Register())
 
 }

@@ -51,7 +51,7 @@ func (uc *AddGroupUseCase) Execute(ctx context.Context, input AddGroupInput) (ex
 	}
 
 	switch input.AddGroupInput.GroupName {
-	case auth.Admin:
+	case auth.GroupAdmin:
 		getByEmailInput := &admin.GetAdminByEmailInput{
 			Email: input.CreateAdminInput.Email,
 		}
@@ -89,7 +89,7 @@ func (uc *AddGroupUseCase) Execute(ctx context.Context, input AddGroupInput) (ex
 			}()
 		}
 
-	case auth.User:
+	case auth.GroupUser:
 		getByEmailInput := &user.GetUserByEmailInput{
 			Email: input.CreateUserInput.Email,
 		}

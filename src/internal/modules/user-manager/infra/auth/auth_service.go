@@ -287,7 +287,7 @@ func (c *cognitoClient) SignUp(ctx context.Context, input auth.SignUpInput) (o *
 
 	err = c.AddGroup(ctx, auth.AddGroupInput{
 		Username:  input.Username,
-		GroupName: auth.User,
+		GroupName: auth.GroupUser,
 	})
 	if err != nil {
 		return nil, err
@@ -518,7 +518,7 @@ func (c *cognitoClient) CreateAdmin(ctx context.Context, input auth.CreateAdminI
 
 	err = c.AddGroup(ctx, auth.AddGroupInput{
 		Username:  input.Username,
-		GroupName: auth.Admin,
+		GroupName: auth.GroupAdmin,
 	})
 	if err != nil {
 		return nil, err
@@ -613,7 +613,7 @@ func (c *cognitoClient) SetPassword(ctx context.Context, input auth.SetPasswordI
 	}, nil
 }
 
-func (c *cognitoClient) GetUser(ctx context.Context, input auth.GetUserInput) (*auth.GetUserOutput, error) {
+func (c *cognitoClient) GetUser(ctx context.Context, input auth.GetUserInput) (*auth.User, error) {
 	if err := input.Validate(); err != nil {
 		return nil, err
 	}
@@ -637,6 +637,22 @@ func (c *cognitoClient) GetUser(ctx context.Context, input auth.GetUserInput) (*
 	}
 
 	var username, name, id string
+	var status auth.UserStatus
+
+	switch cognitoOut.UserStatus {
+	case types.UserStatusTypeUnconfirmed:
+		status = auth.Unconfirmed
+	case types.UserStatusTypeConfirmed, types.UserStatusTypeArchived, types.UserStatusTypeCompromised, types.UserStatusTypeExternalProvider:
+		status = auth.Confirmed
+	case types.UserStatusTypeUnknown:
+		status = auth.Unknown
+	case types.UserStatusTypeResetRequired:
+		status = auth.ResetRequired
+	case types.UserStatusTypeForceChangePassword:
+		status = auth.ForceChangePasswd
+	default:
+		status = auth.Unknown
+	}
 
 	for _, attr := range cognitoOut.UserAttributes {
 		switch *attr.Name {
@@ -649,10 +665,11 @@ func (c *cognitoClient) GetUser(ctx context.Context, input auth.GetUserInput) (*
 		}
 	}
 
-	out := &auth.GetUserOutput{
-		Username: username,
-		Name:     name,
-		Id:       id,
+	out := &auth.User{
+		Email:  username,
+		Name:   name,
+		Id:     id,
+		Status: status,
 	}
 
 	return out, nil

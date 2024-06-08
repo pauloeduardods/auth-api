@@ -23,6 +23,25 @@ type SendConfirmationCodeInput struct {
 }
 
 func (sc *SendConfirmationCodeUseCase) Execute(ctx context.Context, input SendConfirmationCodeInput) error {
+	getUserInput := auth.GetUserInput{
+		Username: input.Username,
+	}
+	if err := getUserInput.Validate(); err != nil {
+		return err
+	}
+
+	getUserOutput, err := sc.auth.GetUser(ctx, getUserInput)
+	if err != nil {
+		return err
+	}
+	if getUserOutput == nil {
+		return auth.ErrUserNotFound
+	}
+
+	if getUserOutput.Status == auth.Confirmed {
+		return auth.ErrUserAlreadyConfirmed
+	}
+
 	generateAndSaveInput := auth.GenerateAndSendCodeInput{
 		Username:   input.Username,
 		Identifier: "CONFIRMATION_CODE",
@@ -34,7 +53,7 @@ func (sc *SendConfirmationCodeUseCase) Execute(ctx context.Context, input SendCo
 		return err
 	}
 
-	_, err := sc.auth.GenerateAndSendCode(ctx, generateAndSaveInput)
+	_, err = sc.auth.GenerateAndSendCode(ctx, generateAndSaveInput)
 	if err != nil {
 		sc.logger.Error("failed to generate code: %v", err)
 		return err

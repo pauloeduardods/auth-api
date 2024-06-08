@@ -26,14 +26,14 @@ func (r *routes) configAuthRoutes() {
 	mfaGroup.POST("/", handler.AddMfa())
 	mfaGroup.POST("/verify", handler.VerifyMfa())
 	mfaGroup.POST("/remove", handler.RemoveMfa())
-	mfaGroup.POST("/admin/remove", r.authMiddleware.AuthMiddleware(auth.Admin), handler.AdminRemoveMfa())
-	mfaGroup.POST("/activate", r.authMiddleware.AuthMiddleware(auth.User), handler.ActivateMfa())
+	mfaGroup.POST("/admin/remove", r.authMiddleware.AuthMiddleware(auth.GroupAdmin), handler.AdminRemoveMfa())
+	mfaGroup.POST("/activate", r.authMiddleware.AuthMiddleware(auth.GroupUser), handler.ActivateMfa())
 
 	groupsGroup := authGroup.Group("/groups")
-	groupsGroup.POST("/add", r.authMiddleware.AuthMiddleware(auth.Admin), handler.AddGroup())
-	groupsGroup.POST("/remove", r.authMiddleware.AuthMiddleware(auth.Admin), handler.RemoveGroup())
+	groupsGroup.POST("/add", r.authMiddleware.AuthMiddleware(auth.GroupAdmin), handler.AddGroup())
+	groupsGroup.POST("/remove", r.authMiddleware.AuthMiddleware(auth.GroupAdmin), handler.RemoveGroup())
 
 	authenticatedGroup := authGroup.Group("/")
-	authenticatedGroup.Use(r.authMiddleware.AuthMiddleware(auth.Admin, auth.User))
+	authenticatedGroup.Use(r.authMiddleware.AuthMiddleware(auth.GroupAdmin, auth.GroupUser))
 	authenticatedGroup.GET("/", handler.GetMe())
 }

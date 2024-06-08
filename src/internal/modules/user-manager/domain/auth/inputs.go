@@ -120,7 +120,7 @@ func (input *AddGroupInput) Validate() error {
 	}
 	input.Username = lowerCaseUsername
 
-	if input.GroupName != Admin && input.GroupName != User {
+	if input.GroupName != GroupAdmin && input.GroupName != GroupUser {
 		return app_error.NewApiError(http.StatusBadRequest, "Invalid user group", fmt.Sprintf("Field: %s", "GroupName"))
 	}
 	return nil
@@ -138,7 +138,7 @@ func (input *RemoveGroupInput) Validate() error {
 	}
 	input.Username = lowerCaseUsername
 
-	if input.GroupName != Admin && input.GroupName != User {
+	if input.GroupName != GroupAdmin && input.GroupName != GroupUser {
 		return app_error.NewApiError(http.StatusBadRequest, "Invalid user group", fmt.Sprintf("Field: %s", "GroupName"))
 	}
 	return nil

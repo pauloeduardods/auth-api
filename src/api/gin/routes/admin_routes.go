@@ -12,7 +12,7 @@ func (r *routes) configAdminRoutes() {
 	adminGroup := r.gin.Group("/admin")
 	adminGroup.Use(middleware.TimeoutMiddleware(30 * time.Second))
 
-	adminGroup.PATCH("/", r.authMiddleware.AuthMiddleware(auth.Admin), handler.Update())
-	adminGroup.POST("/register", r.authMiddleware.AuthMiddleware(auth.Admin), handler.Register())
+	adminGroup.PATCH("/", r.authMiddleware.AuthMiddleware(auth.GroupAdmin), handler.Update())
+	adminGroup.POST("/register", r.authMiddleware.AuthMiddleware(auth.GroupAdmin), handler.Register())
 
 }
